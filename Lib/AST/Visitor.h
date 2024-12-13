@@ -2,22 +2,27 @@
 #include "Expr.h"
 #include "Stmt.h"
 #include "Decl.h"
+#include "Module.h"
 
 class AstVisitor {
 public:
-    virtual void visit(LiteralExpr&) = 0;
-    virtual void visit(UnaryOpExpr&) = 0;
-    virtual void visit(BinaryOpExpr&) = 0;
-    virtual void visit(FunctionCallExpr&) = 0;
-    virtual void visit(NamedExpr&) = 0;
-    virtual void visit(CastExpr&) = 0;
+    virtual ~AstVisitor() = default;
+    virtual void visit(const LiteralExpr&) = 0;
+    virtual void visit(const UnaryOpExpr&) = 0;
+    virtual void visit(const BinaryOpExpr&) = 0;
+    virtual void visit(const FunctionCallExpr&) = 0;
+    virtual void visit(const NamedExpr&) = 0;
+    virtual void visit(const DotExpr&) = 0;
+    virtual void visit(const CastExpr&) = 0;
 
-    virtual void visit(IfStmt&) = 0;
-    virtual void visit(WhileStmt&) = 0;
-    virtual void visit(AssignStmt&) = 0;
-    virtual void visit(CompoundStmt&) = 0;
-    virtual void visit(ReturnStmt&) = 0;
+    virtual void visit(const IfStmt&) = 0;
+    virtual void visit(const WhileStmt&) = 0;
+    virtual void visit(const AssignStmt&) = 0;
+    virtual void visit(const CompoundStmt&) = 0;
+    virtual void visit(const ReturnStmt&) = 0;
+    virtual void visit(const LetStmt&) = 0;
 
-    virtual void visit(VariableDecl&) = 0;
-    virtual void visit(FunctionDecl&) = 0;
+    virtual void visit(const FunctionDecl&) = 0;
+
+    virtual void visit(const Module&) = 0;
 };

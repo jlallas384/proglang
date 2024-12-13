@@ -3,21 +3,31 @@
 #include <string>
 #include <ranges>
 #include <cctype>
+#include <utility>
+
+namespace {
+    constexpr auto kindRange(TokenKind Front, TokenKind Back) {
+        return std::views::iota(std::to_underlying(Front), std::to_underlying(Back) + 1)
+            | std::views::transform([](auto E) { return static_cast<TokenKind>(E); });
+    };
+    constexpr auto Keywords = kindRange(TokenKind::While, TokenKind::Let);
+    constexpr auto OperatorDelimiters = kindRange(TokenKind::AmpAmp, TokenKind::Equal);
+}
 
 Token Lexer::nextToken() {
-    if (At >= Source.length()) {
-        return makeToken(Eof, 0);
+    if (isEof()) {
+        return makeToken(TokenKind::Eof);
     }
-    for (const auto& Kind: OperatorDelimiters) {
-        const auto Str = Kind.toString();
+    for (const auto Kind: OperatorDelimiters) {
+        const auto Str= kindToString(Kind);
         size_t Matched = 0;
         while (Matched < Str.size() && Matched + At < Source.length() && Str[Matched] == Source.at(At + Matched)) {
             Matched++;
         }
         if (Matched == Str.size()) {
+            Buffer = Str;
             At += Str.size();
-            Column += Str.size();
-            return makeToken(Kind, Str.size());
+            return makeToken(Kind);
         }
     }
     switch (Source.at(At)) {
@@ -41,22 +51,36 @@ Token Lexer::nextToken() {
         case 'Y': case 'Z': case '_': {
             return readIdentifierOrKeyword();
         }
+        case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+            return readInteger();
         default:
-            return makeToken(Eof, 0);
+            return makeToken(TokenKind::Eof);
     }
 }
 
+Token Lexer::makeToken(TokenKind Kind) {
+    Token Ret = { Kind, {LineNum, Column}, Buffer };
+    Column += Buffer.size();
+    Buffer = "";
+    return Ret;
+}
+
 Token Lexer::readIdentifierOrKeyword() {
-    std::string Str;
-    while (At < Source.length() && (std::isalnum(Source.at(At)) || Source.at(At) == '_')) {
-        Str += Source.at(At++);
-        Column++;
+    while (!isEof() && (std::isalnum(Source.at(At)) || Source.at(At) == '_')) {
+        Buffer += Source.at(At++);
     }
-    const auto Iter = std::ranges::find_if(Keywords, [&Str](const TokenKind& Kind) {
-        return Str == Kind.toString();
+    const auto Iter = std::ranges::find_if(Keywords, [&](auto Kind) {
+        return Buffer == kindToString(Kind);
     });
     if (Iter != Keywords.end()) {
-        return makeToken(*Iter, Str.size());
+        return makeToken(*Iter);
     }
-    return makeToken(Identifier, Str.size(), Str);
+    return makeToken(TokenKind::Identifier);
+}
+
+Token Lexer::readInteger() {
+    while (!isEof() && std::isdigit(Source.at(At))) {
+        Buffer += Source.at(At++);
+    }
+    return makeToken(TokenKind::Integer);
 }

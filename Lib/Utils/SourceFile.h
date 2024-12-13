@@ -1,10 +1,10 @@
 #pragma once
 #include <string>
 
-class SourceInfo {
+class SourceFile {
 public:
-    static SourceInfo fromPath(std::string SourcePath);
-    SourceInfo(std::string SourceCode, std::string SourcePath) : SourceCode(std::move(SourceCode)), SourcePath(std::move(SourcePath)) {}
+    static SourceFile fromPath(std::string SourcePath);
+    SourceFile(std::string SourceCode, std::string SourcePath) : SourceCode(std::move(SourceCode)), SourcePath(std::move(SourcePath)) {}
     [[nodiscard]] char at(size_t Index) const {
         return SourceCode[Index];
     }

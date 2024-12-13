@@ -1,7 +1,7 @@
 #pragma once
 #include "ASTBase.h"
+#include "Parser/Token.h"
 #include <variant>
-#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -17,7 +17,9 @@ public:
     explicit LiteralExpr(T Value) : Value(Value) {
     }
 
-    void accept(AstVisitor& Visitor) override;
+    template <typename T = std::string>
+    T as() const { return std::get<T>(Value); }
+    void accept(AstVisitor& Visitor) const override;
 
 private:
     std::variant<
@@ -30,40 +32,31 @@ private:
 
 class BinaryOpExpr : public Expression {
 public:
-    enum class Kind : std::uint8_t {
-        Plus, Minus, Star, Slash, Percent,
-        Less, LEq, Greater, GEq, Equals, NEquals
-    };
-
-    BinaryOpExpr(Kind Kind, AstPtr<Expression> Left, AstPtr<Expression> Right) : Kind(Kind), Left(std::move(Left)),
+    BinaryOpExpr(TokenKind Kind, AstPtr<Expression> Left, AstPtr<Expression> Right) : Kind(Kind), Left(std::move(Left)),
         Right(std::move(Right)) {
     }
 
-    [[nodiscard]] Kind getKind() const { return Kind; }
+    [[nodiscard]] TokenKind getKind() const { return Kind; }
     [[nodiscard]] const Expression& getLeft() const { return *Left; }
     [[nodiscard]] const Expression& getRight() const { return *Right; }
-    void accept(AstVisitor& Visitor) override;
+    void accept(AstVisitor& Visitor) const override;
 
 private:
-    Kind Kind;
+    TokenKind Kind;
     AstPtr<Expression> Left, Right;
 };
 
 class UnaryOpExpr : public Expression {
 public:
-    enum class Kind : std::uint8_t {
-        Plus, Minus, Tilde
-    };
-
-    UnaryOpExpr(Kind Kind, AstPtr<Expression> Value) : Kind(Kind), Value(std::move(Value)) {
+    UnaryOpExpr(TokenKind Kind, AstPtr<Expression> Value) : Kind(Kind), Value(std::move(Value)) {
     }
 
-    [[nodiscard]] Kind getKind() const { return Kind; }
+    [[nodiscard]] TokenKind getKind() const { return Kind; }
     [[nodiscard]] const Expression& getValue() const { return *Value; }
-    void accept(AstVisitor& Visitor) override;
+    void accept(AstVisitor& Visitor) const override;
 
 private:
-    Kind Kind;
+    TokenKind Kind;
     AstPtr<Expression> Value;
 };
 
@@ -75,7 +68,7 @@ public:
 
     [[nodiscard]] const Expression& getFunction() const { return *Function; }
     [[nodiscard]] const std::vector<AstPtr<Expression>>& getArgs() const { return Args; }
-    void accept(AstVisitor& Visitor) override;
+    void accept(AstVisitor& Visitor) const override;
 
 private:
     AstPtr<Expression> Function;
@@ -88,24 +81,35 @@ public:
     }
 
     [[nodiscard]] const std::string& getName() const { return Name; }
-    void accept(AstVisitor& Visitor) override;
+    void accept(AstVisitor& Visitor) const override;
 
 private:
     std::string Name;
+};
+
+class DotExpr : public Expression {
+public:
+    DotExpr(AstPtr<Expression> Expr, std::string Identifier) : Expr(std::move(Expr)), Identifier(std::move(Identifier)) {}
+    const std::string& getIdentifier() const { return Identifier; }
+    const Expression& getExpr() const { return *Expr;  }
+    void accept(AstVisitor& Visitor) const override;
+private:
+    AstPtr<Expression> Expr;
+    std::string Identifier;
 };
 
 class Type;
 
 class CastExpr : public Expression {
 public:
-    CastExpr(Type* Type, AstPtr<Expression> Value) : CastType(Type), Value(std::move(Value)) {
+    CastExpr(const Type* Type, AstPtr<Expression> Value) : CastType(Type), Value(std::move(Value)) {
     }
 
-    void accept(AstVisitor& Visitor) override;
-    [[nodiscard]] Type* getType() const { return CastType; }
+    void accept(AstVisitor& Visitor) const override;
+    [[nodiscard]] const Type* getType() const { return CastType; }
     [[nodiscard]] const Expression& getValue() const { return *Value; }
 
 private:
-    Type* CastType;
+    const Type* CastType;
     AstPtr<Expression> Value;
 };

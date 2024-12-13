@@ -15,8 +15,9 @@ set(sources
 	"Parser/Lexer.h"
 	"Parser/Parser.cpp" 
 	"Parser/Parser.h"
-	"Parser/SourceInfo.h" 
-	"Parser/SourceInfo.cpp" "AST/Module.cpp" "AST/Module.h" "Types/FloatingPoint.h" "Types/Integer.h"  "Utils/SourceLoc.h")
+	 
+	"Utils/SourceFile.cpp" 
+	"AST/Module.cpp" "AST/Module.h" "Types/FloatingPoint.h" "Types/Integer.h"  "Utils/SourceLoc.h" "Utils/ErrorReporter.h" "Utils/ErrorReporter.cpp" "AST/ASTPrinter.h" "AST/ASTPrinter.cpp")
 
 add_library(Lib ${sources})
 

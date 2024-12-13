@@ -1,26 +1,30 @@
 #include "Expr.h"
 #include "Visitor.h"
 
-void LiteralExpr::accept(AstVisitor& Visitor) {
+void LiteralExpr::accept(AstVisitor& Visitor) const {
     Visitor.visit(*this);
 }
 
-void BinaryOpExpr::accept(AstVisitor& Visitor) {
+void BinaryOpExpr::accept(AstVisitor& Visitor) const {
     Visitor.visit(*this);
 }
 
-void UnaryOpExpr::accept(AstVisitor& Visitor) {
+void UnaryOpExpr::accept(AstVisitor& Visitor) const {
     Visitor.visit(*this);
 }
 
-void FunctionCallExpr::accept(AstVisitor& Visitor) {
+void FunctionCallExpr::accept(AstVisitor& Visitor) const {
     Visitor.visit(*this);
 }
 
-void NamedExpr::accept(AstVisitor& Visitor) {
+void NamedExpr::accept(AstVisitor& Visitor) const {
     Visitor.visit(*this);
 }
 
-void CastExpr::accept(AstVisitor& Visitor) {
+void DotExpr::accept(AstVisitor& Visitor) const {
+    Visitor.visit(*this);
+}
+
+void CastExpr::accept(AstVisitor& Visitor) const {
     Visitor.visit(*this);
 }

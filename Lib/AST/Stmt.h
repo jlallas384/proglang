@@ -15,13 +15,26 @@ public:
     }
 
     [[nodiscard]] const Expression& getCondition() const { return *Condition; }
-    [[nodiscard]] const Statement& getTrueBlock() const { return *TrueBlock; }
-    [[nodiscard]] const Statement& getFalseBlock() const { return *FalseBlock; }
-    void accept(AstVisitor& Visitor) override;
+    [[nodiscard]] const Statement* getTrueBlock() const { return TrueBlock.get(); }
+    [[nodiscard]] const Statement* getFalseBlock() const { return FalseBlock.get(); }
+    void accept(AstVisitor& Visitor) const override;
 
 private:
     AstPtr<Expression> Condition;
     AstPtr<Statement> TrueBlock, FalseBlock;
+};
+
+class LetStmt : public Statement {
+public:
+    LetStmt(std::string Identifier, const Type* VarType, AstPtr<Expression> Value) :
+        Identifier(std::move(Identifier)), VarType(VarType), Value(std::move(Value)) {}
+    const std::string& getIdentifier() const { return Identifier; }
+    const Expression* getValue() const { return Value.get();  }
+    void accept(AstVisitor& Visitor) const override;
+private:
+    std::string Identifier;
+    const Type* VarType;
+    AstPtr<Expression> Value;
 };
 
 class WhileStmt : public Statement {
@@ -32,7 +45,7 @@ public:
 
     [[nodiscard]] const Expression& getCondition() const { return *Condition; }
     [[nodiscard]] const Statement& getBody() const { return *Body; }
-    void accept(AstVisitor& Visitor) override;
+    void accept(AstVisitor& Visitor) const override;
 
 private:
     AstPtr<Expression> Condition;
@@ -46,7 +59,7 @@ public:
 
     [[nodiscard]] const Expression& getLeft() const { return *Left; }
     [[nodiscard]] const Expression& getRight() const { return *Right; }
-    void accept(AstVisitor& Visitor) override;
+    void accept(AstVisitor& Visitor) const override;
 
 private:
     AstPtr<Expression> Left, Right;
@@ -58,7 +71,7 @@ public:
     }
 
     [[nodiscard]] const auto& getBody() const { return Body; }
-    void accept(AstVisitor& Visitor) override;
+    void accept(AstVisitor& Visitor) const override;
 
 private:
     std::vector<AstPtr<Statement>> Body;
@@ -69,9 +82,8 @@ public:
     explicit ReturnStmt(AstPtr<Expression> Value) : Value(std::move(Value)) {
     }
 
-    [[nodiscard]] const Expression& getValue() const { return *Value; }
-    void accept(AstVisitor& Visitor) override;
-
+    [[nodiscard]] const Expression* getValue() const { return Value.get(); }
+    void accept(AstVisitor& Visitor) const override;
 private:
     AstPtr<Expression> Value;
 };

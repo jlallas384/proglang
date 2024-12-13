@@ -11,7 +11,7 @@ public:
     AstBase& operator=(const AstBase&) = delete;
     AstBase(const AstBase&&) = delete;
     AstBase& operator=(const AstBase&&) = delete;
-    virtual void accept(AstVisitor& Visitor) = 0;
+    virtual void accept(AstVisitor& Visitor) const = 0;
 };
 
 template <typename T>

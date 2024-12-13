@@ -1,6 +1,6 @@
 #include "Decl.h"
 #include "Visitor.h"
 
-void FunctionDecl::accept(AstVisitor& Visitor) {
+void FunctionDecl::accept(AstVisitor& Visitor) const {
     Visitor.visit(*this);
 }
