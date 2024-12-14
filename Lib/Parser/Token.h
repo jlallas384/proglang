@@ -1,5 +1,6 @@
 #pragma once
 #include "Utils/SourceLoc.h"
+#include <cstdint>
 #include <string>
 
 enum class TokenKind : std::int8_t;

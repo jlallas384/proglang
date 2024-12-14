@@ -2,21 +2,21 @@
 #include "Utils/ErrorReporter.h"
 #include "AST/Decl.h"
 #include "AST/Stmt.h"
+#include "AST/Module.h"
 #include <format>
 
-#include "AST/Module.h"
-
-void Parser::parseFile(std::string FilePath) {
+AstPtr<Module> Parser::parseFile(std::string FilePath) {
     const auto Source = SourceFile::fromPath(std::move(FilePath));
     ErrorReporter Reporter;
     Parser P(Source, Reporter);
+    return P.parseModule();
 }
 
-Parser::Parser(SourceFile Source, ErrorReporter& Reporter) : Reporter(Reporter), Source(std::move(Source)), Lex(this->Source), CurTok(Lex.nextToken()) {
-
+Parser::Parser(SourceFile Source, ErrorReporter& Reporter) : Reporter(Reporter), Source(std::move(Source)),
+                                                             Lex(this->Source), CurTok(Lex.nextToken()) {
 }
 
-template <typename ... T>
+template <typename... T>
 std::optional<Token> Parser::consumeToken(T... Args) {
     if (CurTok.is(Args...)) {
         auto Ret = CurTok;
@@ -26,7 +26,7 @@ std::optional<Token> Parser::consumeToken(T... Args) {
     return std::nullopt;
 }
 
-Token Parser::expectToken(const TokenKind &Kind) {
+Token Parser::expectToken(const TokenKind& Kind) {
     auto Tok = advanceToken();
     if (!Tok.is(Kind)) {
         const auto Loc = Tok.getLoc();
@@ -64,14 +64,14 @@ AstPtr<Declaration> Parser::parseFunctionDecl() {
     std::vector<std::string> ParamNames;
     std::vector<const Type*> ParamTypes;
     if (!CurTok.is(TokenKind::RightParen)) {
-        Name = expectIdentifier();
-        ParamNames.push_back(Name);
+        const auto ParamName = expectIdentifier();
+        ParamNames.push_back(ParamName);
         ParamTypes.push_back(parseTypeAnnotation());
     }
     while (!consumeToken(TokenKind::RightParen)) {
         expectToken(TokenKind::Comma);
-        Name = expectIdentifier();
-        ParamNames.push_back(Name);
+        const auto ParamName = expectIdentifier();
+        ParamNames.push_back(ParamName);
         ParamTypes.push_back(parseTypeAnnotation());
     }
     const Type* RetType = parseTypeAnnotation();
@@ -82,19 +82,20 @@ AstPtr<Declaration> Parser::parseFunctionDecl() {
 }
 
 AstPtr<Statement> Parser::parseStmt() {
-    if (CurTok.is(TokenKind::LeftBrace)) {
-        return parseCompoundStmt();
+    switch (CurTok.getKind()) {
+        case TokenKind::LeftBrace:
+            return parseCompoundStmt();
+        case TokenKind::If:
+            return parseIfStmt();
+        case TokenKind::Let:
+            return parseLetStmt();
+        case TokenKind::Return:
+            return parseReturnStmt();
+        case TokenKind::While:
+            return parseWhileStmt();
+        default:
+            return parseExpressionStmt();
     }
-    if (CurTok.is(TokenKind::If)) {
-        return parseIfStmt();
-    }
-    if (CurTok.is(TokenKind::Let)) {
-        return parseLetStmt();
-    }
-    if (CurTok.is(TokenKind::Return)) {
-        return parseReturnStmt();
-    }
-    return nullptr;
 }
 
 AstPtr<Statement> Parser::parseCompoundStmt() {
@@ -104,6 +105,15 @@ AstPtr<Statement> Parser::parseCompoundStmt() {
         Body.push_back(parseStmt());
     }
     return std::make_unique<CompoundStmt>(std::move(Body));
+}
+
+AstPtr<Statement> Parser::parseWhileStmt() {
+    expectToken(TokenKind::While);
+    expectToken(TokenKind::LeftParen);
+    auto Cond = parseExpr();
+    expectToken(TokenKind::RightParen);
+    auto Body = parseStmt();
+    return std::make_unique<WhileStmt>(std::move(Cond), std::move(Body));
 }
 
 AstPtr<Statement> Parser::parseIfStmt() {
@@ -137,6 +147,16 @@ AstPtr<Statement> Parser::parseReturnStmt() {
     }
     expectToken(TokenKind::Semicolon);
     return std::make_unique<ReturnStmt>(std::move(Expr));
+}
+
+AstPtr<Statement> Parser::parseExpressionStmt() {
+    auto Expr = parseExpr();
+    // TODO other assign
+    if (consumeToken(TokenKind::Equal)) {
+        Expr = std::make_unique<BinaryOpExpr>(TokenKind::Equal, std::move(Expr), parseExpr());
+    }
+    expectToken(TokenKind::Semicolon);
+    return std::make_unique<ExpressionStmt>(std::move(Expr));
 }
 
 AstPtr<Expression> Parser::parseExpr() {
@@ -210,7 +230,7 @@ AstPtr<Expression> Parser::parseUnaryExpr() {
 }
 
 AstPtr<Expression> Parser::parsePostFixExpr() {
-    auto Expr = parsePrimaryExpr();
+    auto Expr = parsePrimaryExpr(); //TODO loop
     switch (CurTok.getKind()) {
         case TokenKind::Dot: {
             advanceToken();
@@ -219,12 +239,27 @@ AstPtr<Expression> Parser::parsePostFixExpr() {
             break;
         }
         case TokenKind::LeftParen: {
+            auto Args = parseCallArgs();
+            Expr = std::make_unique<FunctionCallExpr>(std::move(Expr), std::move(Args));
             break;
         }
         default:
             break;
     }
     return Expr;
+}
+
+std::vector<AstPtr<Expression>> Parser::parseCallArgs() {
+    expectToken(TokenKind::LeftParen);
+    std::vector<AstPtr<Expression>> Args;
+    if (!CurTok.is(TokenKind::RightParen)) {
+        Args.push_back(parseExpr());
+    }
+    while (!consumeToken(TokenKind::RightParen)) {
+        expectToken(TokenKind::Comma);
+        Args.push_back(parseExpr());
+    }
+    return Args;
 }
 
 AstPtr<Expression> Parser::parsePrimaryExpr() {
@@ -262,5 +297,4 @@ const Type* Parser::parseType() {
         Reporter.error(Source, Tok.getLoc(), Message);
     }
     return Type;
-
 }

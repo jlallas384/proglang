@@ -9,6 +9,14 @@ void LetStmt::accept(AstVisitor& Visitor) const {
     return Visitor.visit(*this);
 }
 
+void WhileStmt::accept(AstVisitor& Visitor) const {
+    return Visitor.visit(*this);
+}
+
+void ExpressionStmt::accept(AstVisitor& Visitor) const {
+    return Visitor.visit(*this);
+}
+
 void CompoundStmt::accept(AstVisitor& Visitor) const {
     return Visitor.visit(*this);
 }

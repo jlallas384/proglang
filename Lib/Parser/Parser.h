@@ -14,11 +14,10 @@ class Module;
 
 class Parser {
 public:
-    static void parseFile(std::string FilePath);
+    static AstPtr<Module> parseFile(std::string FilePath);
     explicit Parser(SourceFile Source, ErrorReporter& Reporter);
     AstPtr<Module> parseModule();
-public:
-
+private:
     template <typename... T>
     std::optional<Token> consumeToken(T... Args);
     Token expectToken(const TokenKind &Kind);
@@ -29,9 +28,11 @@ public:
 
     AstPtr<Statement> parseStmt();
     AstPtr<Statement> parseCompoundStmt();
+    AstPtr<Statement> parseWhileStmt();
     AstPtr<Statement> parseIfStmt();
     AstPtr<Statement> parseLetStmt();
     AstPtr<Statement> parseReturnStmt();
+    AstPtr<Statement> parseExpressionStmt();
 
     AstPtr<Expression> parseExpr();
 
@@ -39,6 +40,7 @@ public:
     AstPtr<Expression> parseCastExpr();
     AstPtr<Expression> parseUnaryExpr();
     AstPtr<Expression> parsePostFixExpr();
+    std::vector<AstPtr<Expression>> parseCallArgs();
     AstPtr<Expression> parsePrimaryExpr();
 
     const Type* parseTypeAnnotation();

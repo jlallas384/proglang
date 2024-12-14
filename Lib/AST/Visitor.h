@@ -17,10 +17,10 @@ public:
 
     virtual void visit(const IfStmt&) = 0;
     virtual void visit(const WhileStmt&) = 0;
-    virtual void visit(const AssignStmt&) = 0;
     virtual void visit(const CompoundStmt&) = 0;
     virtual void visit(const ReturnStmt&) = 0;
     virtual void visit(const LetStmt&) = 0;
+    virtual void visit(const ExpressionStmt&) = 0;
 
     virtual void visit(const FunctionDecl&) = 0;
 

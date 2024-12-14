@@ -14,5 +14,5 @@ private:
     [[nodiscard]] bool isEof() const { return At >= Source.length(); }
     std::string Buffer;
     SourceFile Source;
-    size_t LineNum = 0, Column = 0, At = 0;
+    size_t LineNum = 1, Column = 0, At = 0;
 };

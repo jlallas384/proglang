@@ -52,17 +52,13 @@ private:
     AstPtr<Statement> Body;
 };
 
-class AssignStmt : public Statement {
+class ExpressionStmt : public Statement {
 public:
-    AssignStmt(AstPtr<Expression> Left, AstPtr<Expression> Right) : Left(std::move(Left)), Right(std::move(Right)) {
-    }
-
-    [[nodiscard]] const Expression& getLeft() const { return *Left; }
-    [[nodiscard]] const Expression& getRight() const { return *Right; }
+    explicit ExpressionStmt(AstPtr<Expression> Expr) : Expr(std::move(Expr)) {}
+    const Expression& getExpr() const { return *Expr; }
     void accept(AstVisitor& Visitor) const override;
-
 private:
-    AstPtr<Expression> Left, Right;
+    AstPtr<Expression> Expr;
 };
 
 class CompoundStmt : public Statement {
