@@ -17,6 +17,7 @@ public:
     }
     const std::string& getName() const { return Name; }
     const auto& getParamNames() const { return ParamNames; }
+    const FunctionType* getFuncType() const { return FuncType; }
     void accept(AstVisitor& Visitor) const override;
 private:
     std::string Name;

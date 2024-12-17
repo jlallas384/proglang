@@ -1,10 +1,9 @@
 #pragma once
 #include "Visitor.h"
-#include <string>
-#include <format>
+#include <string_view>
 #include <vector>
 
-class ASTPrinter : public AstVisitor {
+class AstPrinter : public AstVisitor {
 public:
     void visit(const BinaryOpExpr&) override;
     void visit(const CastExpr&) override;
@@ -23,17 +22,12 @@ public:
     void visit(const ExpressionStmt&) override;
 private:
     struct AstScopeGuard {
-        AstScopeGuard(ASTPrinter& Printer, const std::string& Name);
+        AstScopeGuard(AstPrinter& Printer, std::string_view Name);
         ~AstScopeGuard();
-        ASTPrinter& Printer;
+        AstPrinter& Printer;
         bool AtLastChild = false;
     };
-    void print(const std::string& Str, bool Indented = false) const;
-    template <typename T>
-    void printAttrib(const std::string& Attrib, T Value) const {
-        print(std::format("{} = '{}' ", Attrib, Value));
-    }
-    std::vector<AstScopeGuard*> Parents;
-    int Indent = -1;
 
+    void printNodeName(std::string_view Name) const;
+    std::vector<AstScopeGuard*> Parents;
 };

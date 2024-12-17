@@ -28,7 +28,7 @@ set(sources
     "Utils/SourceLoc.h"
     "Utils/ErrorReporter.cpp"
     "Utils/ErrorReporter.h"
-)
+ "Types/Type.cpp")
 
 add_library(Lib ${sources})
 

@@ -5,6 +5,7 @@
 #include "AST/ASTBase.h"
 #include <string>
 #include <optional>
+#include <memory>
 
 class ErrorReporter;
 class Declaration;
@@ -47,7 +48,7 @@ private:
     const Type* parseType();
 
     ErrorReporter& Reporter;
-    TypesManager Types;
+    std::unique_ptr<TypesManager> Types = std::make_unique<TypesManager>();
     SourceFile Source;
     Lexer Lex;
     Token CurTok;

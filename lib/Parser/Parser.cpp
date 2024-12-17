@@ -54,7 +54,7 @@ AstPtr<Module> Parser::parseModule() {
             Nodes.push_back(parseFunctionDecl());
         }
     }
-    return std::make_unique<Module>(std::move(Nodes));
+    return std::make_unique<Module>(std::move(Nodes), std::move(Types));
 }
 
 AstPtr<Declaration> Parser::parseFunctionDecl() {
@@ -75,7 +75,7 @@ AstPtr<Declaration> Parser::parseFunctionDecl() {
         ParamTypes.push_back(parseTypeAnnotation());
     }
     const Type* RetType = parseTypeAnnotation();
-    const FunctionType* FuncType = Types.getFunctionType(RetType, ParamTypes);
+    const FunctionType* FuncType = Types->getFunctionType(RetType, ParamTypes);
     AstPtr<Statement> Body = parseCompoundStmt();
 
     return std::make_unique<FunctionDecl>(Name, ParamNames, FuncType, std::move(Body));
@@ -290,7 +290,7 @@ const Type* Parser::parseTypeAnnotation() {
 const Type* Parser::parseType() {
     const auto Tok = expectToken(TokenKind::Identifier);
     const auto TypeName = Tok.getValue();
-    const Type* Type = Types.findTypeByName(TypeName);
+    const Type* Type = Types->findTypeByName(TypeName);
 
     if (!Type) {
         auto Message = std::format("Type '{}' not found", TypeName);
