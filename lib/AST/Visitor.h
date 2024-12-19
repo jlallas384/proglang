@@ -7,22 +7,22 @@
 class AstVisitor {
 public:
     virtual ~AstVisitor() = default;
-    virtual void visit(const LiteralExpr&) = 0;
-    virtual void visit(const UnaryOpExpr&) = 0;
-    virtual void visit(const BinaryOpExpr&) = 0;
-    virtual void visit(const FunctionCallExpr&) = 0;
-    virtual void visit(const NamedExpr&) = 0;
-    virtual void visit(const DotExpr&) = 0;
-    virtual void visit(const CastExpr&) = 0;
+    virtual void visit(const LiteralExpr&);
+    virtual void visit(const UnaryOpExpr&);
+    virtual void visit(const BinaryOpExpr&);
+    virtual void visit(const FunctionCallExpr&);
+    virtual void visit(const NamedExpr&);
+    virtual void visit(const DotExpr&);
+    virtual void visit(const CastExpr&);
 
-    virtual void visit(const IfStmt&) = 0;
-    virtual void visit(const WhileStmt&) = 0;
-    virtual void visit(const CompoundStmt&) = 0;
-    virtual void visit(const ReturnStmt&) = 0;
-    virtual void visit(const LetStmt&) = 0;
-    virtual void visit(const ExpressionStmt&) = 0;
+    virtual void visit(const IfStmt&);
+    virtual void visit(const WhileStmt&);
+    virtual void visit(const CompoundStmt&);
+    virtual void visit(const ReturnStmt&);
+    virtual void visit(const LetStmt&);
+    virtual void visit(const ExpressionStmt&);
 
-    virtual void visit(const FunctionDecl&) = 0;
-
-    virtual void visit(const Module&) = 0;
+    virtual void visit(const FunctionDecl&);
+    virtual void visit(const StructDecl&);
+    virtual void visit(const Module&);
 };

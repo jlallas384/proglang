@@ -1,6 +1,7 @@
 #pragma once
 #include "ASTBase.h"
 #include "Parser/Token.h"
+#include "UnresolvedType.h"
 #include <variant>
 #include <string>
 #include <vector>
@@ -98,18 +99,16 @@ private:
     std::string Identifier;
 };
 
-class Type;
-
 class CastExpr : public Expression {
 public:
-    CastExpr(const Type* Type, AstPtr<Expression> Value) : CastType(Type), Value(std::move(Value)) {
+    CastExpr(std::unique_ptr<UnresolvedType> CastType, AstPtr<Expression> Value) : CastType(std::move(CastType)), Value(std::move(Value)) {
     }
 
     void accept(AstVisitor& Visitor) const override;
-    [[nodiscard]] const Type* getType() const { return CastType; }
+    [[nodiscard]] const UnresolvedType& getType() const { return *CastType; }
     [[nodiscard]] const Expression& getValue() const { return *Value; }
 
 private:
-    const Type* CastType;
+    std::unique_ptr<UnresolvedType> CastType;
     AstPtr<Expression> Value;
 };

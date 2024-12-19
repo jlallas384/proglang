@@ -1,11 +1,12 @@
 #pragma once
 #include "Utils/SourceFile.h"
 #include "Lexer.h"
-#include "Types/TypesManager.h"
 #include "AST/ASTBase.h"
+#include "AST/UnresolvedType.h"
 #include <string>
 #include <optional>
 #include <memory>
+#include <vector>
 
 class ErrorReporter;
 class Declaration;
@@ -26,6 +27,7 @@ private:
     Token advanceToken();
 
     AstPtr<Declaration> parseFunctionDecl();
+    AstPtr<Declaration> parseStructDecl();
 
     AstPtr<Statement> parseStmt();
     AstPtr<Statement> parseCompoundStmt();
@@ -44,11 +46,11 @@ private:
     std::vector<AstPtr<Expression>> parseCallArgs();
     AstPtr<Expression> parsePrimaryExpr();
 
-    const Type* parseTypeAnnotation();
-    const Type* parseType();
+    std::unique_ptr<UnresolvedType> parseTypeAnnotation();
+    std::unique_ptr<UnresolvedType> parseType();
 
     ErrorReporter& Reporter;
-    std::unique_ptr<TypesManager> Types = std::make_unique<TypesManager>();
+
     SourceFile Source;
     Lexer Lex;
     Token CurTok;

@@ -33,8 +33,8 @@ void AstPrinter::visit(const BinaryOpExpr& Node) {
 
 void AstPrinter::visit(const CastExpr& Node) {
     AstScopeGuard Scoper(*this, "CastExpr");
-    auto CastType = Node.getType();
-    printNodeInfo("Type", CastType->getName());
+    auto& CastType = Node.getType();
+    printNodeInfo("Type", CastType.toString());
     Scoper.AtLastChild = true;
     Node.getValue().accept(*this);
 }
@@ -76,13 +76,13 @@ void AstPrinter::visit(const FunctionCallExpr& Node) {
 void AstPrinter::visit(const FunctionDecl& Node) {
     AstScopeGuard Scoper(*this, "FunctionDecl");
     std::string ParamNames;
-    for (const auto &Param : Node.getParamNames()) {
-        ParamNames += Param + ",";
+    for (const auto &Param : Node.getParams()) {
+        ParamNames += Param.Name + ",";
     }
     if (!ParamNames.empty()) {
         ParamNames.pop_back();
     }
-    printNodeInfo("Identifier", Node.getName(), "ParamNames", ParamNames, "Type", Node.getFuncType()->getName());
+    printNodeInfo("Identifier", Node.getName(), "ParamNames", ParamNames);
     Scoper.AtLastChild = true;
     Node.getBody().accept(*this);
 }
@@ -165,6 +165,15 @@ void AstPrinter::visit(const ExpressionStmt& Node) {
     printNodeInfo();
     Scoper.AtLastChild = true;
     Node.getExpr().accept(*this);
+}
+
+void AstPrinter::visit(const StructDecl& Node) {
+    AstScopeGuard Scoper(*this, "StructDecl");
+    std::string Fields;
+    for (const auto &Field : Node.getFields()) {
+        Fields += Field.Name + ": " + Field.FieldType->toString() + ",";
+    }
+    printNodeInfo("Name", Node.getName(), "Fields", Fields);
 }
 
 AstPrinter::AstScopeGuard::AstScopeGuard(AstPrinter& Printer, std::string_view Name) : Printer(Printer) {

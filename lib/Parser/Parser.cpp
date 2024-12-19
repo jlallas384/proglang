@@ -52,33 +52,48 @@ AstPtr<Module> Parser::parseModule() {
     while (!CurTok.is(TokenKind::Eof)) {
         if (CurTok.is(TokenKind::Function)) {
             Nodes.push_back(parseFunctionDecl());
+        } else if (CurTok.is(TokenKind::Struct)) {
+            Nodes.push_back(parseStructDecl());
         }
     }
-    return std::make_unique<Module>(std::move(Nodes), std::move(Types));
+    return std::make_unique<Module>(std::move(Nodes));
 }
 
 AstPtr<Declaration> Parser::parseFunctionDecl() {
     expectToken(TokenKind::Function);
     auto Name = expectIdentifier();
     expectToken(TokenKind::LeftParen);
-    std::vector<std::string> ParamNames;
-    std::vector<const Type*> ParamTypes;
+    std::vector<FunctionDecl::Param> Params;
     if (!CurTok.is(TokenKind::RightParen)) {
         const auto ParamName = expectIdentifier();
-        ParamNames.push_back(ParamName);
-        ParamTypes.push_back(parseTypeAnnotation());
+        Params.emplace_back(ParamName, parseTypeAnnotation());
     }
     while (!consumeToken(TokenKind::RightParen)) {
         expectToken(TokenKind::Comma);
         const auto ParamName = expectIdentifier();
-        ParamNames.push_back(ParamName);
-        ParamTypes.push_back(parseTypeAnnotation());
+        Params.emplace_back(ParamName, parseTypeAnnotation());
     }
-    const Type* RetType = parseTypeAnnotation();
-    const FunctionType* FuncType = Types->getFunctionType(RetType, ParamTypes);
+    auto RetType = parseTypeAnnotation();
     AstPtr<Statement> Body = parseCompoundStmt();
+    return std::make_unique<FunctionDecl>(Name, std::move(RetType), std::move(Params), std::move(Body));
+}
 
-    return std::make_unique<FunctionDecl>(Name, ParamNames, FuncType, std::move(Body));
+AstPtr<Declaration> Parser::parseStructDecl() {
+    expectToken(TokenKind::Struct);
+    auto Name = expectIdentifier();
+    expectToken(TokenKind::LeftBrace);
+    std::vector<StructDecl::Field> Fields;
+    StructDecl::Field Field = {
+        expectIdentifier(),
+        parseTypeAnnotation()
+    };
+    Fields.push_back(std::move(Field));
+    while (consumeToken(TokenKind::Comma)) {
+        auto FieldName = expectIdentifier();
+        Fields.emplace_back(FieldName, parseTypeAnnotation());
+    }
+    expectToken(TokenKind::RightBrace);
+    return std::make_unique<StructDecl>(Name, std::move(Fields));
 }
 
 AstPtr<Statement> Parser::parseStmt() {
@@ -132,11 +147,11 @@ AstPtr<Statement> Parser::parseIfStmt() {
 AstPtr<Statement> Parser::parseLetStmt() {
     expectToken(TokenKind::Let);
     auto Name = expectIdentifier();
-    const Type* Type = parseTypeAnnotation();
+    auto Type = parseTypeAnnotation();
     expectToken(TokenKind::Equal);
     auto Value = parseExpr();
     expectToken(TokenKind::Semicolon);
-    return std::make_unique<LetStmt>(std::move(Name), Type, std::move(Value));
+    return std::make_unique<LetStmt>(std::move(Name), std::move(Type), std::move(Value));
 }
 
 AstPtr<Statement> Parser::parseReturnStmt() {
@@ -215,7 +230,7 @@ AstPtr<Expression> Parser::parseCastExpr() {
     AstPtr<Expression> Expr = parseUnaryExpr();
     if (consumeToken(TokenKind::As)) {
         auto Type = parseType();
-        Expr = std::make_unique<CastExpr>(Type, std::move(Expr));
+        Expr = std::make_unique<CastExpr>(std::move(Type), std::move(Expr));
     }
     return Expr;
 }
@@ -282,19 +297,12 @@ AstPtr<Expression> Parser::parsePrimaryExpr() {
     return Expr;
 }
 
-const Type* Parser::parseTypeAnnotation() {
+std::unique_ptr<UnresolvedType> Parser::parseTypeAnnotation() {
     expectToken(TokenKind::Colon);
     return parseType();
 }
 
-const Type* Parser::parseType() {
-    const auto Tok = expectToken(TokenKind::Identifier);
-    const auto TypeName = Tok.getValue();
-    const Type* Type = Types->findTypeByName(TypeName);
-
-    if (!Type) {
-        auto Message = std::format("Type '{}' not found", TypeName);
-        Reporter.error(Source, Tok.getLoc(), Message);
-    }
-    return Type;
+std::unique_ptr<UnresolvedType> Parser::parseType() {
+    auto Name = expectIdentifier();
+    return std::make_unique<NamedType>(Name);
 }

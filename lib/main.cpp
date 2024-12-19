@@ -17,6 +17,5 @@ int main() {
     void *fn_ptr = malloc;
     void (*fn)() = reinterpret_cast<void(*)()>(fn_ptr);
     ffi_call(&Cif, fn, &ptr, Rargs.data());
-
     printf("%x", ptr);
 }

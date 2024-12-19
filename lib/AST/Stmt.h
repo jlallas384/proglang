@@ -1,6 +1,7 @@
 #pragma once
 #include "Expr.h"
 #include "ASTBase.h"
+#include "UnresolvedType.h"
 
 class AstVisitor;
 
@@ -26,14 +27,14 @@ private:
 
 class LetStmt : public Statement {
 public:
-    LetStmt(std::string Identifier, const Type* VarType, AstPtr<Expression> Value) :
-        Identifier(std::move(Identifier)), VarType(VarType), Value(std::move(Value)) {}
+    LetStmt(std::string Identifier, std::unique_ptr<UnresolvedType> VarType, AstPtr<Expression> Value) :
+        Identifier(std::move(Identifier)), VarType(std::move(VarType)), Value(std::move(Value)) {}
     const std::string& getIdentifier() const { return Identifier; }
     const Expression* getValue() const { return Value.get();  }
     void accept(AstVisitor& Visitor) const override;
 private:
     std::string Identifier;
-    const Type* VarType;
+    std::unique_ptr<UnresolvedType> VarType;
     AstPtr<Expression> Value;
 };
 

@@ -36,6 +36,7 @@ enum class TokenKind : std::int8_t {
     Import,
     As,
     Return,
+    Struct,
     Let,
     AmpAmp,
     PipePipe,
@@ -81,6 +82,7 @@ inline std::string kindToString(TokenKind Kind) {
         case TokenKind::Import: return "import";
         case TokenKind::As: return "as";
         case TokenKind::Return: return "return";
+        case TokenKind::Struct: return "struct";
         case TokenKind::Let: return "let";
         case TokenKind::AmpAmp: return "&&";
         case TokenKind::PipePipe: return "||";

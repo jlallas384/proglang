@@ -20,6 +20,7 @@ public:
     void visit(const WhileStmt&) override;
     void visit(const Module&) override;
     void visit(const ExpressionStmt&) override;
+    void visit(const StructDecl&) override;
 private:
     struct AstScopeGuard {
         AstScopeGuard(AstPrinter& Printer, std::string_view Name);
