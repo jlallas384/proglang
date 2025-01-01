@@ -7,7 +7,7 @@ enum class TokenKind : std::int8_t;
 
 class Token {
 public:
-    Token(TokenKind Kind, SourceLoc Loc, std::string Value) : Kind(Kind), Loc(Loc), Value(std::move(Value)) {
+    Token(TokenKind Kind, SourceLoc Start, std::string Value) : Kind(Kind), Range({Start, Value.size()}), Value(std::move(Value)) {
     }
 
     template <typename... T>
@@ -20,11 +20,12 @@ public:
     }
 
     [[nodiscard]] TokenKind getKind() const { return Kind;  }
-    [[nodiscard]] SourceLoc getLoc() const { return Loc;  }
+    [[nodiscard]] SourceLoc getStart() const { return Range.Start;  }
+    [[nodiscard]] SourceLoc getEnd() const { return Range.End; }
     [[nodiscard]] auto getValue() const { return Value; }
 private:
     TokenKind Kind;
-    SourceLoc Loc;
+    SourceRange Range;
     std::string Value;
 };
 
@@ -37,36 +38,40 @@ enum class TokenKind : std::int8_t {
     As,
     Return,
     Struct,
+    True,
+    False,
     Let,
     AmpAmp,
     PipePipe,
     NotEqual,
-    EqualEqual, 
+    EqualEqual,
     GreaterEqual,
     LessEqual,
     LessLess,
     GreaterGreater,
-    Greater, 
-    Less, 
-    Plus, 
-    Minus, 
-    Star, 
+    Greater,
+    Less,
+    Plus,
+    Minus,
+    Star,
     Slash,
     Percent,
-    LeftParen, 
-    RightParen, 
-    LeftBrace, 
-    RightBrace, 
-    LeftSqrBrace, 
-    RightSqrBrace, 
-    Semicolon, 
-    Comma, 
-    Colon, 
-    Dot, 
-    Caret, 
+    LeftParen,
+    RightParen,
+    LeftBrace,
+    RightBrace,
+    LeftSqrBrace,
+    RightSqrBrace,
+    Semicolon,
+    Comma,
+    Colon,
+    Dot,
+    Caret,
     Tilde,
     Pipe,
-    Equal, 
+    Amp,
+    ExclMark,
+    Equal,
     Identifier,
     Integer,
     FloatingPoint,
@@ -83,6 +88,8 @@ inline std::string kindToString(TokenKind Kind) {
         case TokenKind::As: return "as";
         case TokenKind::Return: return "return";
         case TokenKind::Struct: return "struct";
+        case TokenKind::True: return "true";
+        case TokenKind::False: return "false";
         case TokenKind::Let: return "let";
         case TokenKind::AmpAmp: return "&&";
         case TokenKind::PipePipe: return "||";
@@ -112,6 +119,8 @@ inline std::string kindToString(TokenKind Kind) {
         case TokenKind::Caret: return "^";
         case TokenKind::Tilde: return "~";
         case TokenKind::Pipe: return "|";
+        case TokenKind::Amp: return "&";
+        case TokenKind::ExclMark: return "!";
         case TokenKind::Equal: return "=";
         case TokenKind::Identifier: return "identifier";
         case TokenKind::Integer: return "integer";

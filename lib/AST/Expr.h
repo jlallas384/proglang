@@ -1,12 +1,14 @@
 #pragma once
 #include "ASTBase.h"
 #include "Parser/Token.h"
-#include "UnresolvedType.h"
-#include <variant>
+#include "Type.h"
+#include "Utils/Literal.h"
 #include <string>
 #include <vector>
 
 class Expression : public AstBase {
+protected:
+
 };
 
 class LiteralExpr : public Expression {
@@ -18,17 +20,12 @@ public:
     explicit LiteralExpr(T Value) : Value(Value) {
     }
 
-    template <typename T = std::string>
+    template <typename T>
     T as() const { return std::get<T>(Value); }
     void accept(AstVisitor& Visitor) const override;
 
 private:
-    std::variant<
-        long long,
-        double,
-        bool,
-        std::string
-    > Value;
+    Literal Value;
 };
 
 class BinaryOpExpr : public Expression {
@@ -101,14 +98,14 @@ private:
 
 class CastExpr : public Expression {
 public:
-    CastExpr(std::unique_ptr<UnresolvedType> CastType, AstPtr<Expression> Value) : CastType(std::move(CastType)), Value(std::move(Value)) {
+    CastExpr(const Type* CastType, AstPtr<Expression> Value) : CastType(CastType), Value(std::move(Value)) {
     }
 
     void accept(AstVisitor& Visitor) const override;
-    [[nodiscard]] const UnresolvedType& getType() const { return *CastType; }
+    [[nodiscard]] const Type& getType() const { return *CastType; }
     [[nodiscard]] const Expression& getValue() const { return *Value; }
 
 private:
-    std::unique_ptr<UnresolvedType> CastType;
+    const Type* CastType;
     AstPtr<Expression> Value;
 };

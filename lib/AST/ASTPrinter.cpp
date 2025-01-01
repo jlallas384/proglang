@@ -104,7 +104,7 @@ void AstPrinter::visit(const IfStmt& Node) {
 
 void AstPrinter::visit(const LetStmt& Node) {
     AstScopeGuard Scoper(*this, "LetStmt");
-    printNodeInfo("Identifier", Node.getIdentifier());
+    printNodeInfo("Identifier", Node.getIdentifier(), "Type", Node.getType()->toString());
     auto Value = Node.getValue();
     if (Value) {
         Scoper.AtLastChild = true;
@@ -114,7 +114,12 @@ void AstPrinter::visit(const LetStmt& Node) {
 
 void AstPrinter::visit(const LiteralExpr& Node) {
     AstScopeGuard Scoper(*this, "LiteralExpr");
-    printNodeInfo("Value", Node.as<long long>());
+    if (Node.is<BoolLiteral>()) {
+        std::string Value = Node.as<BoolLiteral>().Value ? "true" : "false";
+        printNodeInfo("Value", Value);
+    } else if (Node.is<IntLiteral>()) {
+        printNodeInfo("Value", Node.as<IntLiteral>().Value);
+    }
 }
 
 void AstPrinter::visit(const NamedExpr& Node) {

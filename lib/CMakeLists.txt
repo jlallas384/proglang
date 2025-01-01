@@ -11,6 +11,10 @@ set(sources
     "AST/Module.h"
     "AST/ASTPrinter.h"
     "AST/ASTPrinter.cpp"
+    "AST/Type.h"
+    "AST/Type.cpp"
+    "AST/TypeContext.cpp"
+    "AST/Visitor.cpp"
 
     "Parser/Token.h"
     "Parser/Lexer.cpp"
@@ -18,18 +22,23 @@ set(sources
     "Parser/Parser.cpp"
     "Parser/Parser.h"
 
-    "Types/Type.h"
-    "Types/TypesManager.cpp"
-    "Types/TypesManager.h"
-    "Types/FloatingPoint.h"
-    "Types/Integer.h"
-
     "Utils/SourceFile.cpp"
     "Utils/SourceLoc.h"
     "Utils/ErrorReporter.cpp"
     "Utils/ErrorReporter.h"
- "Types/Type.cpp" "Utils/SourceRange.h" "AST/Visitor.cpp" "AST/UnresolvedType.h")
+    
+    "Utils/Literal.h"
+
+    "Seman/Seman.h"
+    "Seman/Seman.cpp"
+
+
+)
 
 add_library(Lib ${sources})
 
-target_include_directories(Lib PUBLIC .)
+find_package(LLVM CONFIG REQUIRED)
+target_include_directories(Lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+llvm_map_components_to_libnames(llvm_libs Core)
+target_link_libraries(Lib PRIVATE ${llvm_libs})
