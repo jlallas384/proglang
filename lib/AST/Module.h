@@ -11,7 +11,7 @@ public:
         Declarations(std::move(Declarations)), TyContext(std::move(TyContext)) {}
     const auto& getDeclarations() const { return Declarations; }
     void accept(AstVisitor& Visitor) const override;
-private:
+public:
     std::vector<AstPtr<Declaration>> Declarations;
     std::shared_ptr<TypeContext> TyContext;
 };

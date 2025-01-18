@@ -1,5 +1,5 @@
 #include "Stmt.h"
-#include "Visitor.h"
+#include "ASTVisitor.h"
 
 void IfStmt::accept(AstVisitor& Visitor) const {
     return Visitor.visit(*this);

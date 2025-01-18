@@ -6,7 +6,7 @@ set(sources
     "AST/Stmt.cpp"
     "AST/Stmt.h"
     "AST/ASTBase.h"
-    "AST/Visitor.h"
+    "AST/ASTVisitor.h"
     "AST/Module.cpp"
     "AST/Module.h"
     "AST/ASTPrinter.h"
@@ -14,7 +14,7 @@ set(sources
     "AST/Type.h"
     "AST/Type.cpp"
     "AST/TypeContext.cpp"
-    "AST/Visitor.cpp"
+    "AST/ASTVisitor.cpp"
 
     "Parser/Token.h"
     "Parser/Lexer.cpp"
@@ -33,7 +33,7 @@ set(sources
     "Seman/Seman.cpp"
 
 
-)
+ "AST/TypeVisitor.h"  "Seman/TypeResolver.h" "Seman/TypeResolver.cpp" "Utils/VisitorBase.h" "Seman/NameResolver.h" "Seman/NameResolver.cpp" "Seman/Scope.h" "Seman/SemanInfo.h" "Seman/Symbol.h" "Seman/Validator.h" "Seman/Validator.cpp")
 
 add_library(Lib ${sources})
 

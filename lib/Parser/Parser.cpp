@@ -325,6 +325,6 @@ const Type* Parser::parseType() {
     if (CurTok.is(TokenKind::LeftSqrBrace)) {
         return parseArrayType();
     }
-    auto Name = expectIdentifier();
-    return new UnresolvedType(*TyContext, Name);
+    const auto Name = expectIdentifier();
+    return TyContext->createUnresolvedType(Name);
 }

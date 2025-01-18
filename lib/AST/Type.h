@@ -6,6 +6,8 @@
 class TypeContext;
 enum class TokenKind : std::int8_t;
 
+class TypeVisitor;
+
 class Type {
 public:
     virtual ~Type() = default;
@@ -16,6 +18,7 @@ public:
     [[nodiscard]] virtual std::string toString() const = 0;
     virtual const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const { return nullptr; }
     virtual const Type* applyUnaryOp(TokenKind OpKind, const Type* Other) const { return nullptr; }
+    virtual void accept(TypeVisitor& Visitor) const = 0;
 protected:
     Type(TypeContext& Context);
     TypeContext& Context;
@@ -24,10 +27,9 @@ protected:
 class PrimitiveType : public Type {
 public:
     PrimitiveType(TypeContext& TyContext, std::string Name) : Type(TyContext), Name(std::move(Name)) {}
+    std::string toString() const override { return Name; }
     const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const override;
-    std::string toString() const override {
-        return Name;
-    }
+    void accept(TypeVisitor& Visitor) const override;
 private:
     std::string Name;
 };
@@ -39,6 +41,7 @@ public:
     bool getSign() const { return Sign; }
     const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const override;
     const Type* applyUnaryOp(TokenKind OpKind, const Type* Other) const override;
+    void accept(TypeVisitor& Visitor) const override;
 private:
     std::uint8_t Width;
     bool Sign;
@@ -50,6 +53,7 @@ public:
     std::uint8_t getWidth() const { return Width; }
     const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const override;
     const Type* applyUnaryOp(TokenKind OpKind, const Type* Other) const override;
+    void accept(TypeVisitor& Visitor) const override;
 private:
     std::uint8_t Width;
 };
@@ -60,6 +64,7 @@ public:
     std::string toString() const override;
     const Type* getReturnType() const { return ReturnType; }
     const std::vector<const Type*>& getParamTypes() const { return ParamTypes; }
+    void accept(TypeVisitor& Visitor) const override;
 private:
     const Type* ReturnType;
     std::vector<const Type*> ParamTypes;
@@ -72,6 +77,7 @@ public:
     const Type* getElementType() const { return ElementType; }
     const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const override;
     const Type* applyUnaryOp(TokenKind OpKind, const Type* Other) const override;
+    void accept(TypeVisitor& Visitor) const override;
 private:
     const Type* ElementType;
 };
@@ -83,6 +89,7 @@ public:
     std::uint32_t getSize() const { return Size; }
     const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const override { return nullptr; }
     const Type* applyUnaryOp(TokenKind OpKind, const Type* Other) const override { return nullptr; }
+    void accept(TypeVisitor& Visitor) const override;
 private:
     std::uint32_t Size;
 };
@@ -91,6 +98,7 @@ class UnresolvedType final : public Type {
 public:
     UnresolvedType(TypeContext& TyContext, std::string Name) : Type(TyContext), Name(std::move(Name)) {}
     std::string toString() const override { return Name; }
+    void accept(TypeVisitor& Visitor) const override;
 private:
     std::string Name;
 };
@@ -100,9 +108,10 @@ public:
     StructType(TypeContext &TyContext, std::string Name, std::map<std::string, const Type*> Fields)
         : Type(TyContext), Name(std::move(Name)), Fields(std::move(Fields)) {}
     std::string toString() const override { return Name; }
-    const Type* getField(const std::string& Name) const;
+    const Type* getField(const std::string& FieldName) const;
     std::string getName() const { return Name; }
     const Type* applyUnaryOp(TokenKind OpKind, const Type* Other) const override;
+    void accept(TypeVisitor& Visitor) const override;
 private:
     std::string Name;
     std::map<std::string, const Type*> Fields;

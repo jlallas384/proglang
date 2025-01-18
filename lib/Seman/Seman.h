@@ -1,13 +1,6 @@
 #pragma once
-#include "AST/Visitor.h"
-#include "AST/ASTBase.h"
-#include <map>
-
-struct AstTypeInfo {
-    
-};
+#include "AST/ASTVisitor.h"
 
 class Seman : public AstVisitor {
-private:
-    
+
 };

@@ -9,7 +9,7 @@ class Declaration : public AstBase {
 };
 
 
-class FunctionDecl : public Declaration {
+class FunctionDecl final : public Declaration {
 public:
     struct Param {
         std::string Name;

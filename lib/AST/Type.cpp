@@ -1,5 +1,6 @@
 #include "Type.h"
 #include "TypeContext.h"
+#include "TypeVisitor.h"
 #include "Parser/Token.h"
 #include <format>
 
@@ -18,6 +19,10 @@ const Type* PrimitiveType::applyBinaryOp(TokenKind OpKind, const Type* Other) co
         }
     }
     return nullptr;
+}
+
+void PrimitiveType::accept(TypeVisitor& Visitor) const {
+    Visitor.visit(*this);
 }
 
 const Type* IntegerType::applyBinaryOp(TokenKind OpKind, const Type* Other) const {
@@ -42,6 +47,10 @@ const Type* IntegerType::applyUnaryOp(TokenKind OpKind, const Type* Other) const
     return this;
 }
 
+void IntegerType::accept(TypeVisitor& Visitor) const {
+    Visitor.visit(*this);
+}
+
 const Type* FloatingPointType::applyBinaryOp(TokenKind OpKind, const Type* Other) const {
     if (this == Other) {
         return this;
@@ -56,6 +65,10 @@ const Type* FloatingPointType::applyUnaryOp(TokenKind OpKind, const Type* Other)
     return this;
 }
 
+void FloatingPointType::accept(TypeVisitor& Visitor) const {
+    Visitor.visit(*this);
+}
+
 std::string FunctionType::toString() const {
     std::string Ret = ReturnType->toString() + "(";
     if (!ParamTypes.empty()) {
@@ -66,6 +79,10 @@ std::string FunctionType::toString() const {
     }
     Ret += ")";
     return Ret;
+}
+
+void FunctionType::accept(TypeVisitor& Visitor) const {
+    Visitor.visit(*this);
 }
 
 const Type* PointerType::applyBinaryOp(TokenKind OpKind, const Type* Other) const {
@@ -85,12 +102,24 @@ const Type* PointerType::applyUnaryOp(TokenKind OpKind, const Type* Other) const
     return nullptr;
 }
 
+void PointerType::accept(TypeVisitor& Visitor) const {
+    Visitor.visit(*this);
+}
+
 std::string ArrayType::toString() const {
     return std::format("[{}, {}]", getElementType()->toString(), Size);
 }
 
-const Type* StructType::getField(const std::string& Name) const {
-    const auto Iter = Fields.find(Name);
+void ArrayType::accept(TypeVisitor& Visitor) const {
+    Visitor.visit(*this);
+}
+
+void UnresolvedType::accept(TypeVisitor& Visitor) const {
+    Visitor.visit(*this);
+}
+
+const Type* StructType::getField(const std::string& FieldName) const {
+    const auto Iter = Fields.find(FieldName);
     return Iter == Fields.end() ? nullptr : Iter->second;
 }
 
@@ -99,4 +128,8 @@ const Type* StructType::applyUnaryOp(TokenKind OpKind, const Type* Other) const 
         return Context.getPointerType(this);
     }
     return nullptr;
+}
+
+void StructType::accept(TypeVisitor& Visitor) const {
+    Visitor.visit(*this);
 }

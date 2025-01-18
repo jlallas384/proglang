@@ -49,6 +49,11 @@ const FunctionType* TypeContext::getFunctionType(const Type* ReturnType, const s
     return FunctionTypes.back().get();
 }
 
+const UnresolvedType* TypeContext::createUnresolvedType(const std::string &Name) {
+    UnresolvedTypes.push_back(std::make_unique<UnresolvedType>(*this, Name));
+    return UnresolvedTypes.back().get();
+}
+
 const StructType* TypeContext::createStructType(std::string Name, std::map<std::string, const Type*> Fields) {
     StructTypes.push_back(std::make_unique<StructType>(*this, std::move(Name), std::move(Fields)));
     return StructTypes.back().get();

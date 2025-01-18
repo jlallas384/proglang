@@ -7,8 +7,6 @@
 #include <vector>
 
 class Expression : public AstBase {
-protected:
-
 };
 
 class LiteralExpr : public Expression {

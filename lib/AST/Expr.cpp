@@ -1,5 +1,5 @@
 #include "Expr.h"
-#include "Visitor.h"
+#include "ASTVisitor.h"
 
 void LiteralExpr::accept(AstVisitor& Visitor) const {
     Visitor.visit(*this);
