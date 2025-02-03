@@ -1,5 +1,4 @@
 #include "SourceFile.h"
-#include <fstream>
 #include <algorithm>
 
 SourceFile::SourceFile(std::string SrcString, std::string SourcePath): SourceCode(std::move(SrcString)), SourcePath(std::move(SourcePath)) {

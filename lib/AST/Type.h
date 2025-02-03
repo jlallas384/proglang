@@ -1,12 +1,12 @@
 #pragma once
 
+#include "Parser/TokenKind.h"
 #include "Identifier.h"
 #include <string>
 #include <vector>
 #include <map>
 
 class TypeContext;
-enum class TokenKind : std::int8_t;
 
 class TypeVisitor;
 

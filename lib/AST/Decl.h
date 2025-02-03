@@ -2,7 +2,6 @@
 #include "ASTBase.h"
 #include "Stmt.h"
 #include "Type.h"
-#include <string>
 #include <vector>
 
 class Declaration : public AstBase {

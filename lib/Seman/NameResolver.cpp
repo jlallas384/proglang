@@ -3,6 +3,7 @@
 #include "TypeResolver.h"
 #include <iostream>
 #include <cassert>
+#include <format>
 
 NameResolver::NameResolver(Seman& SemanInfo, const std::vector<const StructType*>& StructTypes) : SemanInfo(SemanInfo) {
     for (const auto Ty : SemanInfo.getTyContext().getBuiltinTypes()) {

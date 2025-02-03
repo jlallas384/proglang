@@ -41,13 +41,15 @@ set(sources
     "Seman/TypeCheck.h"
     "Seman/TypeCheck.cpp"
     "Utils/SourceManager.h" 
-    "Utils/SourceManager.cpp" "AST/Identifier.h")
+    "Utils/SourceManager.cpp" "AST/Identifier.h"
+    "Parser/TokenKind.h"    
+)
 
 add_library(Lib ${sources})
-
-find_package(LLVM CONFIG REQUIRED)
+target_compile_features(Lib PRIVATE cxx_std_23)
+#find_package(LLVM CONFIG REQUIRED)
 
 target_include_directories(Lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-llvm_map_components_to_libnames(llvm_libs Core)
-target_link_libraries(Lib PRIVATE ${llvm_libs})
+#llvm_map_components_to_libnames(llvm_libs Core)
+#target_link_libraries(Lib PRIVATE ${llvm_libs})

@@ -3,12 +3,15 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <cstdint>
+#include <format>
 
 enum class UnderlineState : std::uint8_t {
     Not,
     Middle,
     Done
 };
+
 
 std::vector<std::string> createUnderlines(std::span<std::string_view> Lines, const SourceRange& Loc) {
     unsigned LineIndex = 0;
@@ -77,7 +80,7 @@ std::vector<std::string> createLineNumPrefix(const SourceRange& Loc, std::string
 }
 
 void ErrorReporter::error(SourceFile& Source, const SourceRange& Loc, const std::string& Message) {
-    std::cout << std::format("error: {}:{}:{}: {}", Source.getSourcePath(), Loc.Start.LineNum, Loc.Start.Column,
+    std::cout << std::format("error: {}:{}:{}: {}", Source.getSourcePath(), Loc.Start.LineNum, Loc.Start.Column + 1,
                              Message) << '\n';
 
     auto SourceLines = Source.getSourceFromRange(Loc);

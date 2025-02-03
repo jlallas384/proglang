@@ -31,6 +31,9 @@ Token Lexer::nextToken() {
         }
     }
     switch (Source.at(At)) {
+        case '\r':
+            At++;
+            return nextToken();
         case '\n': {
             LineNum++;
             Column = 0;
