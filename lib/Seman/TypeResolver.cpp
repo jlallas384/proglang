@@ -1,12 +1,20 @@
 #include "TypeResolver.h"
 #include "AST/TypeContext.h"
+#include <iostream>
+#include <format>
 
-TypeResolver::TypeResolver(TypeContext& TyContext, const Type* ResolvedType) : TyContext(TyContext), ResolvedType(ResolvedType) {
+TypeResolver::TypeResolver(TypeContext& TyContext, std::map<std::string, const Type*>& ResolvedTypes) : TyContext(TyContext), ResolvedTypes(ResolvedTypes) {
 
 }
 
 void TypeResolver::visit(const UnresolvedType& Ty) {
-    returnValue(ResolvedType);
+    const auto TypeName = Ty.toString();
+    const auto Iter = ResolvedTypes.find(TypeName);
+    if (Iter == ResolvedTypes.end()) {
+        std::cout << std::format("type '{}' not found\n", TypeName);
+    } else {
+        returnValue(Iter->second);
+    }
 }
 
 void TypeResolver::visit(const PointerType& Ty) {

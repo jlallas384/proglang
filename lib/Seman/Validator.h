@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AST/ASTVisitor.h"
-
+#include "Utils/VisitorBase.h"
 /* Checks for:
  * struct redefintion
  * parameters with same name
@@ -12,7 +12,7 @@
 class StructType;
 class TypeContext;
 
-class Validator : public AstVisitor {
+class Validator : public VisitorBase<Validator, const AstBase, bool>, public AstVisitor {
 public:
     Validator(TypeContext& TyContext);
     void visit(const FunctionDecl&) override;

@@ -7,7 +7,11 @@ public:
         Ty.accept(static_cast<Derived&>(*this));
         return Result;
     }
-    void returnValue(RetType Ret) { Result = Ret; }
+    void returnValue(RetType Ret) {
+        Result = Ret;
+    }
 private:
-    RetType Result;
+    friend Derived;
+    VisitorBase() = default;
+    RetType Result{};
 };

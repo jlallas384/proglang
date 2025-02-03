@@ -4,6 +4,8 @@
 #include <ranges>
 #include <string_view>
 
+#include "Utils/SourceFile.h"
+
 namespace {
     auto dropLast(auto&& Cont) {
         return Cont | std::views::take(Cont.size() - 1);
@@ -54,7 +56,7 @@ void AstPrinter::visit(const CompoundStmt& Node) {
 
 void AstPrinter::visit(const DotExpr& Node) {
     AstScopeGuard Scoper(*this, "DotExpr");
-    printNodeInfo("Identifier", Node.getIdentifier());
+    printNodeInfo("Identifier", Node.getIdentifier().getName());
     Scoper.AtLastChild = true;
     Node.getExpr().accept(*this);
 }
@@ -77,12 +79,12 @@ void AstPrinter::visit(const FunctionDecl& Node) {
     AstScopeGuard Scoper(*this, "FunctionDecl");
     std::string ParamNames;
     for (const auto &Param : Node.getParams()) {
-        ParamNames += Param.Name + ",";
+        ParamNames += Param.Identifier.getName() + ",";
     }
     if (!ParamNames.empty()) {
         ParamNames.pop_back();
     }
-    printNodeInfo("Identifier", Node.getName(), "ParamNames", ParamNames);
+    printNodeInfo("Identifier", Node.getIdentifier().getName(), "ParamNames", ParamNames);
     Scoper.AtLastChild = true;
     Node.getBody().accept(*this);
 }
@@ -124,7 +126,7 @@ void AstPrinter::visit(const LiteralExpr& Node) {
 
 void AstPrinter::visit(const NamedExpr& Node) {
     AstScopeGuard Scoper(*this, "NamedExpr");
-    printNodeInfo("Name", Node.getName());
+    printNodeInfo("Identifier", Node.getIdentifier().getName());
 }
 
 void AstPrinter::visit(const ReturnStmt& Node) {
@@ -154,7 +156,7 @@ void AstPrinter::visit(const WhileStmt& Node) {
 
 void AstPrinter::visit(const Module& Node) {
     AstScopeGuard Scoper(*this, "Module");
-    printNodeInfo();
+    printNodeInfo("Path", Node.getSourceFile().getSourcePath());
     auto& Decls = Node.getDeclarations();
     if (!Decls.empty()) {
         for (auto &Decl : dropLast(Decls)) {
@@ -176,9 +178,9 @@ void AstPrinter::visit(const StructDecl& Node) {
     AstScopeGuard Scoper(*this, "StructDecl");
     std::string Fields;
     for (const auto &Field : Node.getFields()) {
-        Fields += Field.Name + ": " + Field.FieldType->toString() + ",";
+        Fields += Field.Identifier.getName() + ": " + Field.FieldType->toString() + ",";
     }
-    printNodeInfo("Name", Node.getName(), "Fields", Fields);
+    printNodeInfo("Identifier", Node.getIdentifier().getName(), "Fields", Fields);
 }
 
 AstPrinter::AstScopeGuard::AstScopeGuard(AstPrinter& Printer, std::string_view Name) : Printer(Printer) {

@@ -3,37 +3,34 @@
 #include <set>
 #include <string>
 #include <ranges>
+#include <iostream>
 
 Validator::Validator(TypeContext& TyContext) : TyContext(TyContext) {
 }
 
 void Validator::visit(const FunctionDecl& FunctionDecl) {
     std::set<std::string> ParamNames;
-    for (auto &[Name, _] : FunctionDecl.getParams()) {
-        if (ParamNames.contains(Name)) {
-            
-        } else {
-            ParamNames.insert(Name);
+    for (auto &[Identifier, _] : FunctionDecl.getParams()) {
+        if (ParamNames.contains(Identifier.getName())) {
+            std::cout << "multiple param names\n";
+            return returnValue(true);
         }
+        ParamNames.insert(Identifier.getName());
     }
 }
 
 void Validator::visit(const StructDecl& StructDecl) {
     std::set<std::string> FieldNames;
-    bool Valid = true;
-    for (auto &[Name, _] : StructDecl.getFields()) {
-        if (FieldNames.contains(Name)) {
-            Valid = false;
-        } else {
-            FieldNames.insert(Name);
+    for (auto &[Identifier, _] : StructDecl.getFields()) {
+        if (FieldNames.contains(Identifier.getName())) {
+            std::cout << "multiple field names\n";
+            return returnValue(true);
         }
-    }
-    if (!Valid) {
-        return;
+        FieldNames.insert(Identifier.getName());
     }
 
-    auto Iter = std::ranges::find_if(StructTypes, [&StructDecl](auto& StructTy) {
-        return StructDecl.getName() == StructTy->getName();
+    const auto Iter = std::ranges::find_if(StructTypes, [&StructDecl](auto& StructTy) {
+        return StructDecl.getIdentifier().getName() == StructTy->getName();
     });
 
     if (Iter != StructTypes.end()) {
@@ -41,10 +38,10 @@ void Validator::visit(const StructDecl& StructDecl) {
     }
 
     std::map<std::string, const Type*> Fields;
-    for (auto &[Name, Ty] : StructDecl.getFields()) {
-        Fields.emplace(Name, Ty);
+    for (auto &[Identifier, Ty] : StructDecl.getFields()) {
+        Fields.emplace(Identifier.getName(), Ty);
     }
-    const auto Ty = TyContext.createStructType(StructDecl.getName(), Fields);
+    const auto Ty = TyContext.createStructType(StructDecl.getIdentifier().getName(), Fields);
     StructTypes.push_back(Ty);
 }
 

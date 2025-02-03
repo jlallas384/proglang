@@ -15,29 +15,38 @@ set(sources
     "AST/Type.cpp"
     "AST/TypeContext.cpp"
     "AST/ASTVisitor.cpp"
-
     "Parser/Token.h"
     "Parser/Lexer.cpp"
     "Parser/Lexer.h"
     "Parser/Parser.cpp"
     "Parser/Parser.h"
-
     "Utils/SourceFile.cpp"
     "Utils/SourceLoc.h"
     "Utils/ErrorReporter.cpp"
     "Utils/ErrorReporter.h"
-    
     "Utils/Literal.h"
-
     "Seman/Seman.h"
     "Seman/Seman.cpp"
-
-
- "AST/TypeVisitor.h"  "Seman/TypeResolver.h" "Seman/TypeResolver.cpp" "Utils/VisitorBase.h" "Seman/NameResolver.h" "Seman/NameResolver.cpp" "Seman/Scope.h" "Seman/SemanInfo.h" "Seman/Symbol.h" "Seman/Validator.h" "Seman/Validator.cpp")
+    "AST/TypeVisitor.h"
+    "Seman/TypeResolver.h"
+    "Seman/TypeResolver.cpp"
+    "Utils/VisitorBase.h"
+    "Seman/NameResolver.h"
+    "Seman/NameResolver.cpp"
+    "Seman/Scope.h"
+    
+    "Seman/Symbol.h"
+    "Seman/Validator.h"
+    "Seman/Validator.cpp"
+    "Seman/TypeCheck.h"
+    "Seman/TypeCheck.cpp"
+    "Utils/SourceManager.h" 
+    "Utils/SourceManager.cpp" "AST/Identifier.h")
 
 add_library(Lib ${sources})
 
 find_package(LLVM CONFIG REQUIRED)
+
 target_include_directories(Lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 llvm_map_components_to_libnames(llvm_libs Core)

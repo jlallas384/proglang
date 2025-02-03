@@ -19,7 +19,8 @@ public:
         return Kind == TargetKind;
     }
 
-    [[nodiscard]] TokenKind getKind() const { return Kind;  }
+    [[nodiscard]] TokenKind getKind() const { return Kind; }
+    [[nodiscard]] SourceRange getRange() const { return Range; }
     [[nodiscard]] SourceLoc getStart() const { return Range.Start;  }
     [[nodiscard]] SourceLoc getEnd() const { return Range.End; }
     [[nodiscard]] auto getValue() const { return Value; }

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "Identifier.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -96,11 +98,11 @@ private:
 
 class UnresolvedType final : public Type {
 public:
-    UnresolvedType(TypeContext& TyContext, std::string Name) : Type(TyContext), Name(std::move(Name)) {}
-    std::string toString() const override { return Name; }
+    UnresolvedType(TypeContext& TyContext, IdentifierSymbol Identifier) : Type(TyContext), Identifier(std::move(Identifier)) {}
+    std::string toString() const override { return Identifier.getName(); }
     void accept(TypeVisitor& Visitor) const override;
 private:
-    std::string Name;
+    IdentifierSymbol Identifier;
 };
 
 class StructType final : public Type {

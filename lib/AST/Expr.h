@@ -3,10 +3,16 @@
 #include "Parser/Token.h"
 #include "Type.h"
 #include "Utils/Literal.h"
-#include <string>
+#include "Identifier.h"
 #include <vector>
 
 class Expression : public AstBase {
+public:
+    virtual SourceRange getRange() const {
+        return SourceRange{{1, 1}, {1, 1}};
+    };
+    SourceLoc getStart() const { return getRange().Start; }
+    SourceLoc getEnd() const { return getRange().End; }
 };
 
 class LiteralExpr : public Expression {
@@ -15,15 +21,18 @@ public:
     [[nodiscard]] bool is() const { return std::holds_alternative<T>(Value); }
 
     template <typename T>
-    explicit LiteralExpr(T Value) : Value(Value) {
+    explicit LiteralExpr(T Value, const SourceRange& Range) : Value(Value), Range(Range) {
     }
 
     template <typename T>
     T as() const { return std::get<T>(Value); }
+
     void accept(AstVisitor& Visitor) const override;
+    SourceRange getRange() const override { return Range; }
 
 private:
     Literal Value;
+    SourceRange Range;
 };
 
 class BinaryOpExpr : public Expression {
@@ -37,6 +46,10 @@ public:
     [[nodiscard]] const Expression& getRight() const { return *Right; }
     void accept(AstVisitor& Visitor) const override;
 
+    SourceRange getRange() const override {
+        return {Left->getStart(), Right->getEnd()};
+    }
+
 private:
     TokenKind Kind;
     AstPtr<Expression> Left, Right;
@@ -44,54 +57,79 @@ private:
 
 class UnaryOpExpr : public Expression {
 public:
-    UnaryOpExpr(TokenKind Kind, AstPtr<Expression> Value) : Kind(Kind), Value(std::move(Value)) {
+    UnaryOpExpr(SourceLoc StartLoc, TokenKind Kind, AstPtr<Expression> Value) : StartLoc(StartLoc), Kind(Kind),
+        Value(std::move(Value)) {
     }
 
     [[nodiscard]] TokenKind getKind() const { return Kind; }
     [[nodiscard]] const Expression& getValue() const { return *Value; }
     void accept(AstVisitor& Visitor) const override;
 
+    SourceRange getRange() const override {
+        return {StartLoc, Value->getEnd()};
+    }
+
 private:
+    SourceLoc StartLoc;
     TokenKind Kind;
     AstPtr<Expression> Value;
 };
 
 class FunctionCallExpr : public Expression {
 public:
-    FunctionCallExpr(AstPtr<Expression> Function, std::vector<AstPtr<Expression>> Args) : Function(std::move(Function)),
-        Args(std::move(Args)) {
+    FunctionCallExpr(AstPtr<Expression> Function, std::vector<AstPtr<Expression>> Args, SourceLoc EndLoc) :
+        Function(std::move(Function)),
+        Args(std::move(Args)), EndLoc(EndLoc) {
     }
 
     [[nodiscard]] const Expression& getFunction() const { return *Function; }
     [[nodiscard]] const std::vector<AstPtr<Expression>>& getArgs() const { return Args; }
+    const Expression& getArg(unsigned Index) const { return *getArgs()[Index]; }
     void accept(AstVisitor& Visitor) const override;
+
+    SourceRange getRange() const override {
+        return {Function->getStart(), EndLoc};
+    }
 
 private:
     AstPtr<Expression> Function;
     std::vector<AstPtr<Expression>> Args;
+    SourceLoc EndLoc;
 };
 
 class NamedExpr : public Expression {
 public:
-    explicit NamedExpr(std::string Name) : Name(std::move(Name)) {
+    explicit NamedExpr(IdentifierSymbol Identifier) : Identififer(std::move(Identifier)) {
     }
 
-    [[nodiscard]] const std::string& getName() const { return Name; }
+    [[nodiscard]] const auto& getIdentifier() const { return Identififer; }
     void accept(AstVisitor& Visitor) const override;
 
+    SourceRange getRange() const override {
+        return Identififer.getRange();
+    }
+
 private:
-    std::string Name;
+    IdentifierSymbol Identififer;
 };
 
 class DotExpr : public Expression {
 public:
-    DotExpr(AstPtr<Expression> Expr, std::string Identifier) : Expr(std::move(Expr)), Identifier(std::move(Identifier)) {}
-    const std::string& getIdentifier() const { return Identifier; }
-    const Expression& getExpr() const { return *Expr;  }
+    DotExpr(AstPtr<Expression> Expr, IdentifierSymbol Identifier) : Expr(std::move(Expr)),
+                                                                    Identifier(std::move(Identifier)) {
+    }
+
+    const auto& getIdentifier() const { return Identifier; }
+    const Expression& getExpr() const { return *Expr; }
     void accept(AstVisitor& Visitor) const override;
+
+    SourceRange getRange() const override {
+        return {Expr->getStart(), Identifier.getRange().End};
+    }
+
 private:
     AstPtr<Expression> Expr;
-    std::string Identifier;
+    IdentifierSymbol Identifier;
 };
 
 class CastExpr : public Expression {

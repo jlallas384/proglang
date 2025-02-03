@@ -19,7 +19,7 @@ Token Lexer::nextToken() {
         return makeToken(TokenKind::Eof);
     }
     for (const auto Kind: OperatorDelimiters) {
-        const auto Str= kindToString(Kind);
+        const auto Str = kindToString(Kind);
         size_t Matched = 0;
         while (Matched < Str.size() && Matched + At < Source.length() && Str[Matched] == Source.at(At + Matched)) {
             Matched++;

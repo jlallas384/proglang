@@ -8,7 +8,7 @@ TypeContext::TypeContext() :
     I64Ty(*this, "i64", 64, true),
     F32Ty(*this, "f32", 32),
     F64Ty(*this, "f64", 64),
-    BoolTy(*this, "Bool"),
+    BoolTy(*this, "bool"),
     BuiltinTypes({&I8Ty, &I16Ty, &I32Ty, &I64Ty, &F32Ty, &F64Ty, &BoolTy})
 {
 }
@@ -49,8 +49,8 @@ const FunctionType* TypeContext::getFunctionType(const Type* ReturnType, const s
     return FunctionTypes.back().get();
 }
 
-const UnresolvedType* TypeContext::createUnresolvedType(const std::string &Name) {
-    UnresolvedTypes.push_back(std::make_unique<UnresolvedType>(*this, Name));
+const UnresolvedType* TypeContext::createUnresolvedType(IdentifierSymbol Identifier) {
+    UnresolvedTypes.push_back(std::make_unique<UnresolvedType>(*this, std::move(Identifier)));
     return UnresolvedTypes.back().get();
 }
 

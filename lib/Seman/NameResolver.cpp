@@ -1,10 +1,16 @@
 #include "NameResolver.h"
-#include "SemanInfo.h"
+#include "Seman.h"
+#include "TypeResolver.h"
 #include <iostream>
 #include <cassert>
 
-NameResolver::NameResolver(SemanInfo& Info) : Info(Info) {
-    
+NameResolver::NameResolver(Seman& SemanInfo, const std::vector<const StructType*>& StructTypes) : SemanInfo(SemanInfo) {
+    for (const auto Ty : SemanInfo.getTyContext().getBuiltinTypes()) {
+        Types[Ty->toString()] = Ty;
+    }
+    for (const auto Ty : StructTypes) {
+        Types[Ty->toString()] = Ty;
+    }
 }
 
 void NameResolver::visit(const Module& Module) {
@@ -13,19 +19,32 @@ void NameResolver::visit(const Module& Module) {
 }
 
 void NameResolver::visit(const FunctionDecl& FunctionDecl) { //TODO take all function first in an initial pass
-    const auto &Name = FunctionDecl.getName();
+    const auto& Name = FunctionDecl.getIdentifier().getName();
     if (!CurrentScope->find(Name)) {
-        CurrentScope->insert(Name, FunctionOverloads{});
+        CurrentScope->insert(Name, &FunctionDecl);
+    } else {
+        // TODO redefinition error
     }
 
-    const auto Overloads = std::get_if<FunctionOverloads>(CurrentScope->find(Name));
-    assert(Overloads);
-    Overloads->push_back(&FunctionDecl);
 
     ScopeGuard Guard(CurrentScope);
+
+    std::vector<const Type*> ParamTypes;
+    TypeResolver TyResolver(SemanInfo.getTyContext(), Types);
+
     for (const auto& Param : FunctionDecl.getParams()) {
-        CurrentScope->insert(Param.Name, &Param);
+        CurrentScope->insert(Param.Identifier.getName(), &Param);
+
+        auto ResolvedType = TyResolver.doVisit(*Param.ParamType);
+        assert(ResolvedType);
+        SemanInfo.get(Param).Ty = ResolvedType;
+        ParamTypes.push_back(ResolvedType);
     }
+
+    const auto RetType = TyResolver.doVisit(FunctionDecl.getRetType());
+    const auto FunctionTy = SemanInfo.getTyContext().getFunctionType(RetType, ParamTypes);
+    SemanInfo.get(FunctionDecl).Ty = FunctionTy;
+
     FunctionDecl.getBody().accept(*this);
 }
 
@@ -34,6 +53,12 @@ void NameResolver::visit(const LetStmt& Node) {
         std::cout << "multiple symbol" << '\n';
     }
     CurrentScope->insert(Node.getIdentifier(), &Node);
+
+    TypeResolver TyResolver(SemanInfo.getTyContext(), Types);
+    const auto ResolvedType = TyResolver.doVisit(*Node.getType());
+    SemanInfo.get(Node).Ty = ResolvedType;
+
+    Node.getValue()->accept(*this);
 }
 
 void NameResolver::visit(const CompoundStmt& CompoundStmt) {
@@ -42,11 +67,12 @@ void NameResolver::visit(const CompoundStmt& CompoundStmt) {
 }
 
 void NameResolver::visit(const NamedExpr& NamedExpr) {
-    const auto &Name = NamedExpr.getName();
+    const auto& Name = NamedExpr.getIdentifier().getName();
     const auto Sym = CurrentScope->find(Name);
     if (Sym == nullptr) {
-        std::cout << "symbol not found" << " " << Name << '\n';
+        auto Msg = std::format("Symbol '{}' not found", Name);
+        SemanInfo.error(NamedExpr.getIdentifier().getRange(), Msg);
     } else {
-        Info.get(NamedExpr).SymRef = *Sym;
+        SemanInfo.get(NamedExpr).SymRef = *Sym;
     }
 }

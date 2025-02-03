@@ -5,14 +5,12 @@
 #include "AST/Module.h"
 #include <format>
 
-AstPtr<Module> Parser::parseFile(std::string FilePath, std::shared_ptr<TypeContext> TyContext) {
-    const auto Source = SourceFile::fromPath(std::move(FilePath));
-    ErrorReporter Reporter;
+AstPtr<Module> Parser::parseSourceFile(SourceFile& Source, ErrorReporter& Reporter, std::shared_ptr<TypeContext> TyContext) {
     Parser P(Source, Reporter);
     return P.parseModule(std::move(TyContext));
 }
 
-Parser::Parser(SourceFile Source, ErrorReporter& Reporter) : Reporter(Reporter), Source(std::move(Source)),
+Parser::Parser(SourceFile& Source, ErrorReporter& Reporter) : Reporter(Reporter), Source(Source),
                                                              Lex(this->Source), CurTok(Lex.nextToken()) {
 }
 
@@ -29,16 +27,15 @@ std::optional<Token> Parser::consumeToken(T... Args) {
 Token Parser::expectToken(TokenKind Kind) {
     auto Tok = advanceToken();
     if (!Tok.is(Kind)) {
-        const auto Loc = Tok.getStart();
         const auto Message = std::format("Expected '{}', found '{}'", kindToString(Kind), kindToString(Tok.getKind()));
-        Reporter.error(Source, Loc, Message);
+        Reporter.error(Source, Tok.getRange(), Message);
     }
     return Tok;
 }
 
-std::string Parser::expectIdentifier() {
+IdentifierSymbol Parser::expectIdentifier() {
     const auto Tok = expectToken(TokenKind::Identifier);
-    return Tok.getValue();
+    return { Tok.getValue(), Tok.getRange() };
 }
 
 Token Parser::advanceToken() {
@@ -57,7 +54,7 @@ AstPtr<Module> Parser::parseModule(std::shared_ptr<TypeContext> TypeContext) {
             Nodes.push_back(parseStructDecl());
         }
     }
-    return std::make_unique<Module>(std::move(Nodes), std::move(TyContext));
+    return std::make_unique<Module>(std::move(Nodes), std::move(TyContext), Source);
 }
 
 AstPtr<Declaration> Parser::parseFunctionDecl() {
@@ -152,7 +149,7 @@ AstPtr<Statement> Parser::parseLetStmt() {
     expectToken(TokenKind::Equal);
     auto Value = parseExpr();
     expectToken(TokenKind::Semicolon);
-    return std::make_unique<LetStmt>(std::move(Name), Type, std::move(Value));
+    return std::make_unique<LetStmt>(std::move(Name).getName(), Type, std::move(Value)); // TODO 
 }
 
 AstPtr<Statement> Parser::parseReturnStmt() {
@@ -215,7 +212,7 @@ namespace {
 }
 
 AstPtr<Expression> Parser::parseBinaryExpr(int Prec) {
-    if (Prec == 9) {
+    if (Prec > binOpPrecedence(TokenKind::Star)) {
         return parseCastExpr();
     }
     auto Expr = parseBinaryExpr(Prec + 1);
@@ -240,7 +237,7 @@ AstPtr<Expression> Parser::parseUnaryExpr() {
     const auto Tok = consumeToken(TokenKind::Plus, TokenKind::Minus, TokenKind::Tilde, TokenKind::Star, TokenKind::Amp, TokenKind::ExclMark);
     if (Tok) {
         auto Expr = parsePostFixExpr();
-        return std::make_unique<UnaryOpExpr>(Tok->getKind(), std::move(Expr));
+        return std::make_unique<UnaryOpExpr>(Tok->getStart(), Tok->getKind(), std::move(Expr));
     }
     return parsePostFixExpr();
 }
@@ -256,7 +253,8 @@ AstPtr<Expression> Parser::parsePostFixExpr() {
         }
         case TokenKind::LeftParen: {
             auto Args = parseCallArgs();
-            Expr = std::make_unique<FunctionCallExpr>(std::move(Expr), std::move(Args));
+            const auto RParen = expectToken(TokenKind::RightParen);
+            Expr = std::make_unique<FunctionCallExpr>(std::move(Expr), std::move(Args), RParen.getEnd());
             break;
         }
         default:
@@ -271,7 +269,7 @@ std::vector<AstPtr<Expression>> Parser::parseCallArgs() {
     if (!CurTok.is(TokenKind::RightParen)) {
         Args.push_back(parseExpr());
     }
-    while (!consumeToken(TokenKind::RightParen)) {
+    while (!CurTok.is(TokenKind::RightParen)) {
         expectToken(TokenKind::Comma);
         Args.push_back(parseExpr());
     }
@@ -282,19 +280,19 @@ AstPtr<Expression> Parser::parsePrimaryExpr() {
     AstPtr<Expression> Expr = nullptr;
     switch (CurTok.getKind()) {
         case TokenKind::Integer:
-            Expr = std::make_unique<LiteralExpr>(IntLiteral{ std::stoull(CurTok.getValue()) });
+            Expr = std::make_unique<LiteralExpr>(IntLiteral{ std::stoull(CurTok.getValue()) }, CurTok.getRange());
             advanceToken();
             break;
         case TokenKind::True:
-            Expr = std::make_unique<LiteralExpr>(BoolLiteral{ true });
+            Expr = std::make_unique<LiteralExpr>(BoolLiteral{ true }, CurTok.getRange());
             advanceToken();
             break;
         case TokenKind::False:
-            Expr = std::make_unique<LiteralExpr>(BoolLiteral{ false });
+            Expr = std::make_unique<LiteralExpr>(BoolLiteral{ false }, CurTok.getRange());
             advanceToken();
             break;
         case TokenKind::Identifier:
-            Expr = std::make_unique<NamedExpr>(CurTok.getValue());
+            Expr = std::make_unique<NamedExpr>(IdentifierSymbol{ CurTok.getValue(), CurTok.getRange() });
             advanceToken();
             break;
         case TokenKind::LeftParen:

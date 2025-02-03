@@ -4,7 +4,7 @@
 #include "AST/ASTBase.h"
 #include "AST/Type.h"
 #include "AST/TypeContext.h"
-#include <string>
+#include "AST/Identifier.h"
 #include <optional>
 #include <memory>
 #include <vector>
@@ -17,14 +17,14 @@ class Module;
 
 class Parser {
 public:
-    static AstPtr<Module> parseFile(std::string FilePath, std::shared_ptr<TypeContext> TyContext = std::make_shared<TypeContext>());
-    explicit Parser(SourceFile Source, ErrorReporter& Reporter);
+    static AstPtr<Module> parseSourceFile(SourceFile& Source, ErrorReporter& Reporter, std::shared_ptr<TypeContext> TyContext = std::make_shared<TypeContext>());
+    explicit Parser(SourceFile& Source, ErrorReporter& Reporter);
     AstPtr<Module> parseModule(std::shared_ptr<TypeContext> TypeContext);
 private:
     template <typename... T>
     std::optional<Token> consumeToken(T... Args);
     Token expectToken(TokenKind Kind);
-    std::string expectIdentifier();
+    IdentifierSymbol expectIdentifier();
     Token advanceToken();
 
     AstPtr<Declaration> parseFunctionDecl();
@@ -53,7 +53,7 @@ private:
 
     ErrorReporter& Reporter;
     std::shared_ptr<TypeContext> TyContext;
-    SourceFile Source;
+    SourceFile &Source;
     Lexer Lex;
     Token CurTok;
 };

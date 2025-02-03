@@ -12,20 +12,20 @@ class Declaration : public AstBase {
 class FunctionDecl final : public Declaration {
 public:
     struct Param {
-        std::string Name;
+        IdentifierSymbol Identifier;
         const Type* ParamType;
     };
-    FunctionDecl(std::string Name, const Type* RetType, std::vector<Param> Params, AstPtr<Statement> Body) :
-        Name(std::move(Name)), RetType(RetType), Params(std::move(Params)), Body(std::move(Body)) {}
+    FunctionDecl(IdentifierSymbol Identifier, const Type* RetType, std::vector<Param> Params, AstPtr<Statement> Body) :
+        Identifier(std::move(Identifier)), RetType(RetType), Params(std::move(Params)), Body(std::move(Body)) {}
     [[nodiscard]] const Statement& getBody() const {
         return *Body;
     }
-    const std::string& getName() const { return Name; }
+    const auto& getIdentifier() const { return Identifier; }
     const Type& getRetType() const { return *RetType; }
     const auto& getParams() const { return Params; }
     void accept(AstVisitor& Visitor) const override;
 private:
-    std::string Name;
+    IdentifierSymbol Identifier;
     const Type* RetType;
     std::vector<Param> Params;
     AstPtr<Statement> Body;
@@ -35,14 +35,14 @@ private:
 class StructDecl final : public Declaration {
 public:
     struct Field {
-        std::string Name;
+        IdentifierSymbol Identifier;
         const Type* FieldType;
     };
-    StructDecl(std::string Name, std::vector<Field> Fields) : Name(std::move(Name)), Fields(std::move(Fields)) {}
-    const std::string& getName() const { return Name; }
+    StructDecl(IdentifierSymbol Identifier, std::vector<Field> Fields) : Identifier(std::move(Identifier)), Fields(std::move(Fields)) {}
+    const auto& getIdentifier() const { return Identifier; }
     auto& getFields() const { return Fields; }
     void accept(AstVisitor& Visitor) const override;
 private:
-    std::string Name;
+    IdentifierSymbol Identifier;
     std::vector<Field> Fields;
 };

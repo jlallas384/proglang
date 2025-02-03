@@ -27,14 +27,14 @@ private:
 
 class LetStmt : public Statement {
 public:
-    LetStmt(std::string Identifier, const Type* VarType, AstPtr<Expression> Value) :
-        Identifier(std::move(Identifier)), VarType(VarType), Value(std::move(Value)) {}
-    const std::string& getIdentifier() const { return Identifier; }
+    LetStmt(std::string Name, const Type* VarType, AstPtr<Expression> Value) :
+        Name(std::move(Name)), VarType(VarType), Value(std::move(Value)) {}
+    const std::string& getIdentifier() const { return Name; }
     const Type* getType() const { return VarType; }
     const Expression* getValue() const { return Value.get();  }
     void accept(AstVisitor& Visitor) const override;
 private:
-    std::string Identifier;
+    std::string Name;
     const Type* VarType;
     AstPtr<Expression> Value;
 };
