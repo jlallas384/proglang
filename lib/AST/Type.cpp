@@ -1,8 +1,10 @@
 #include "Type.h"
 #include "TypeContext.h"
 #include "TypeVisitor.h"
+#include "Decl.h"
 #include "Parser/Token.h"
 #include <format>
+#include <ranges>
 
 Type::Type(TypeContext& Context) : Context(Context) {
 }
@@ -93,7 +95,7 @@ void FunctionType::accept(TypeVisitor& Visitor) const {
 
 const Type* PointerType::applyBinaryOp(TokenKind OpKind, const Type* Other) const {
     if (Other->getTag() == TypeTag::Integer) {
-        const auto& Ptr = Other->as<const IntegerType>();
+        const auto& Ptr = Other->as<IntegerType>();
         return Ptr.applyBinaryOp(OpKind, Other);
     }
     return nullptr;
@@ -125,8 +127,15 @@ void UnresolvedType::accept(TypeVisitor& Visitor) const {
     Visitor.visit(*this);
 }
 
-const Type* StructType::getField(const std::string& FieldName) const {
-    return nullptr; // TODO
+const StructDeclField* StructType::getField(const std::string& FieldName) const {
+    const auto& Fields = Decl.getFields();
+    const auto Iter = std::ranges::find_if(Fields, [&](auto &Field) {
+        return Field.getName() == FieldName;
+    });
+    if (Iter != Fields.end()) {
+        return &*Iter;
+    }
+    return nullptr;
 }
 
 const Type* StructType::applyUnaryOp(TokenKind OpKind) const {

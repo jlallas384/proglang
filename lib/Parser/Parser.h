@@ -36,7 +36,8 @@ private:
     AstPtr<Statement> parseIfStmt();
     AstPtr<Statement> parseLetStmt();
     AstPtr<Statement> parseReturnStmt();
-    AstPtr<Statement> parseExpressionStmt();
+    AstPtr<Statement> parseExpressionOrAssignStmt();
+    AstPtr<Statement> parseAssignStmt(AstPtr<Expression> Left);
 
     AstPtr<Expression> parseExpr();
 

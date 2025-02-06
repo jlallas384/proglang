@@ -191,6 +191,14 @@ void AstPrinter::visit(const SubscriptExpr& Node) {
     Node.getSubscript().accept(*this);
 }
 
+void AstPrinter::visit(const AssignStmt& Node) {
+    AstScopeGuard Scoper(*this, "AssignStmt");
+    printNodeInfo();
+    Node.getLeft().accept(*this);
+    Scoper.AtLastChild = true;
+    Node.getRight().accept(*this);
+}
+
 AstPrinter::AstScopeGuard::AstScopeGuard(AstPrinter& Printer, std::string_view Name) : Printer(Printer) {
     Printer.printNodeName(Name);
     Printer.Parents.push_back(this);

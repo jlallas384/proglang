@@ -22,6 +22,7 @@ public:
     virtual void visit(const ReturnStmt&);
     virtual void visit(const LetStmt&);
     virtual void visit(const ExpressionStmt&);
+    virtual void visit(const AssignStmt&);
 
     virtual void visit(const FunctionDecl&);
     virtual void visit(const StructDecl&);

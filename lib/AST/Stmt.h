@@ -83,3 +83,13 @@ public:
 private:
     AstPtr<Expression> Value;
 };
+
+class AssignStmt : public Statement {
+public:
+    AssignStmt(AstPtr<Expression> Left, AstPtr<Expression> Right) : Left(std::move(Left)), Right(std::move(Right)) {}
+    const auto& getLeft() const { return *Left; }
+    const auto& getRight() const { return *Right; }
+    void accept(AstVisitor& Visitor) const override;
+private:
+    AstPtr<Expression> Left, Right;
+};

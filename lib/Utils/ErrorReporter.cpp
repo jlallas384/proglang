@@ -80,9 +80,8 @@ std::vector<std::string> createLineNumPrefix(const SourceRange& Loc, std::string
 }
 
 void ErrorReporter::error(SourceFile& Source, const SourceRange& Loc, const std::string& Message) {
-    std::cout << std::format("error: {}:{}:{}: {}", Source.getSourcePath(), Loc.Start.LineNum, Loc.Start.Column + 1,
-                             Message) << '\n';
-
+    auto Msg = std::format("error: {}:{}:{}: {}", Source.getSourcePath(), Loc.Start.LineNum, Loc.Start.Column + 1, Message);
+    std::cout << Msg << '\n';
     auto SourceLines = Source.getSourceFromRange(Loc);
     auto Underlines = createUnderlines(SourceLines, Loc);
     std::string UnderlinePrefix;

@@ -59,7 +59,7 @@ void NameResolver::visit(const LetStmt& Node) {
         SemanInfo.setType(Node, ResolvedType);
     }
 
-    Node.getValue()->accept(*this);
+    AstVisitor::visit(Node);
 }
 
 void NameResolver::visit(const CompoundStmt& CompoundStmt) {

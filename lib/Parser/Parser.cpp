@@ -80,9 +80,9 @@ AstPtr<Declaration> Parser::parseStructDecl() {
     expectToken(TokenKind::Struct);
     auto Name = expectIdentifier();
     expectToken(TokenKind::LeftBrace);
-    std::vector<StructDecl::Field> Fields;
+    std::vector<StructDeclField> Fields;
     auto FirstFieldIdentifier = expectIdentifier();
-    StructDecl::Field Field = {
+    StructDeclField Field = {
         FirstFieldIdentifier,
         parseTypeAnnotation().getType()
     };
@@ -108,7 +108,7 @@ AstPtr<Statement> Parser::parseStmt() {
         case TokenKind::While:
             return parseWhileStmt();
         default:
-            return parseExpressionStmt();
+            return parseExpressionOrAssignStmt();
     }
 }
 
@@ -147,8 +147,11 @@ AstPtr<Statement> Parser::parseLetStmt() {
     expectToken(TokenKind::Let);
     auto Name = expectIdentifier();
     auto Type = parseTypeAnnotation();
-    expectToken(TokenKind::Equal);
-    auto Value = parseExpr();
+
+    AstPtr<Expression> Value = nullptr;
+    if (consumeToken(TokenKind::Equal)) {
+        Value = parseExpr();
+    }
     expectToken(TokenKind::Semicolon);
     return std::make_unique<LetStmt>(std::move(Name), Type, std::move(Value));
 }
@@ -163,14 +166,22 @@ AstPtr<Statement> Parser::parseReturnStmt() {
     return std::make_unique<ReturnStmt>(std::move(Expr));
 }
 
-AstPtr<Statement> Parser::parseExpressionStmt() {
+AstPtr<Statement> Parser::parseExpressionOrAssignStmt() {
     auto Expr = parseExpr();
     // TODO other assign
-    if (consumeToken(TokenKind::Equal)) {
-        Expr = std::make_unique<BinaryOpExpr>(TokenKind::Equal, std::move(Expr), parseExpr());
+    if (CurTok.is(TokenKind::Equal)) {
+        return parseAssignStmt(std::move(Expr));
     }
     expectToken(TokenKind::Semicolon);
     return std::make_unique<ExpressionStmt>(std::move(Expr));
+}
+
+AstPtr<Statement> Parser::parseAssignStmt(AstPtr<Expression> Left) {
+    expectToken(TokenKind::Equal);
+    auto Right = parseExpr();
+    expectToken(TokenKind::Semicolon);
+
+    return std::make_unique<AssignStmt>(std::move(Left), std::move(Right));
 }
 
 AstPtr<Expression> Parser::parseExpr() {
@@ -245,29 +256,26 @@ AstPtr<Expression> Parser::parseUnaryExpr() {
 
 AstPtr<Expression> Parser::parsePostFixExpr() {
     auto Expr = parsePrimaryExpr(); //TODO loop
-    switch (CurTok.getKind()) {
-        case TokenKind::Dot: {
+
+    while (true) {
+        if (CurTok.is(TokenKind::Dot)) {
             advanceToken();
             auto Identifier = expectIdentifier();
             Expr = std::make_unique<DotExpr>(std::move(Expr), Identifier);
-            break;
-        }
-        case TokenKind::LeftParen: {
+        } else if (CurTok.is(TokenKind::LeftParen)) {
             auto Args = parseCallArgs();
             const auto RParen = expectToken(TokenKind::RightParen);
             Expr = std::make_unique<FunctionCallExpr>(std::move(Expr), std::move(Args), RParen.getEnd());
-            break;
-        }
-        case TokenKind::LeftSqrBrace: {
+        } else if (CurTok.is(TokenKind::LeftSqrBrace)) {
             advanceToken();
             auto Subscript = parseExpr();
             const auto RSqrBrace = expectToken(TokenKind::RightSqrBrace);
             Expr = std::make_unique<SubscriptExpr>(std::move(Expr), std::move(Subscript), RSqrBrace.getEnd());
+        } else {
             break;
         }
-        default:
-            break;
     }
+
     return Expr;
 }
 

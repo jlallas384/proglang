@@ -24,3 +24,7 @@ void CompoundStmt::accept(AstVisitor& Visitor) const {
 void ReturnStmt::accept(AstVisitor& Visitor) const {
     return Visitor.visit(*this);
 }
+
+void AssignStmt::accept(AstVisitor& Visitor) const {
+    return Visitor.visit(*this);
+}

@@ -28,16 +28,17 @@ private:
     AstPtr<Statement> Body;
 };
 
+struct StructDeclField : Nameable {
+    StructDeclField(IdentifierSymbol Identifier, const Type* FieldType) : Nameable(std::move(Identifier)), FieldType(FieldType) {}
+    const Type* FieldType;
+};
 
 class StructDecl final : public Declaration, public Nameable {
 public:
-    struct Field : Nameable {
-        Field(IdentifierSymbol Identifier, const Type* FieldType) : Nameable(std::move(Identifier)), FieldType(FieldType) {}
-        const Type* FieldType;
-    };
-    StructDecl(IdentifierSymbol Identifier, std::vector<Field> Fields) : Nameable(std::move(Identifier)), Fields(std::move(Fields)) {}
+
+    StructDecl(IdentifierSymbol Identifier, std::vector<StructDeclField> Fields) : Nameable(std::move(Identifier)), Fields(std::move(Fields)) {}
     auto& getFields() const { return Fields; }
     void accept(AstVisitor& Visitor) const override;
 private:
-    std::vector<Field> Fields;
+    std::vector<StructDeclField> Fields;
 };

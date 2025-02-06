@@ -61,12 +61,18 @@ void AstVisitor::visit(const ReturnStmt& Node) {
 }
 
 void AstVisitor::visit(const LetStmt& Node) {
-    //TODO empty initializer
-    Node.getValue()->accept(*this);
+    if (const auto Value = Node.getValue()) {
+        Value->accept(*this);
+    }
 }
 
 void AstVisitor::visit(const ExpressionStmt& Node) {
     Node.getExpr().accept(*this);
+}
+
+void AstVisitor::visit(const AssignStmt& Node) {
+    Node.getLeft().accept(*this);
+    Node.getRight().accept(*this);
 }
 
 void AstVisitor::visit(const FunctionDecl& Node) {

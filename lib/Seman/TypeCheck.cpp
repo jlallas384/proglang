@@ -1,19 +1,18 @@
 #include "TypeCheck.h"
-#include "AST/TypeVisitor.h"
 #include "Seman.h"
 #include <format>
 
 void TypeCheck::visit(const LiteralExpr& LiteralExpr) {
     if (LiteralExpr.is<IntLiteral>()) {
-        returnValue(SemanInfo.getTyContext().getI32Type());
+        returnValue({ SemanInfo.getTyContext().getI32Type() });
     } else if (LiteralExpr.is<FloatLiteral>()) {
-        returnValue(SemanInfo.getTyContext().getF32Type());
+        returnValue({ SemanInfo.getTyContext().getF32Type() });
     }
 }
 
 void TypeCheck::visit(const BinaryOpExpr& BinaryOpExpr) {
-    const auto LeftTy = doVisit(BinaryOpExpr.getLeft());
-    const auto RightTy = doVisit(BinaryOpExpr.getRight());
+    const Type* LeftTy = check(BinaryOpExpr.getLeft());
+    const Type* RightTy = check(BinaryOpExpr.getRight());
 
     const auto BinTy = LeftTy->applyBinaryOp(BinaryOpExpr.getKind(), RightTy);
     if (BinTy == nullptr) {
@@ -21,20 +20,20 @@ void TypeCheck::visit(const BinaryOpExpr& BinaryOpExpr) {
             LeftTy->toString(), RightTy->toString());
         SemanInfo.error(BinaryOpExpr.getRange(), Msg);
     } else {
-        returnValue(BinTy);
+        returnValue({ BinTy });
     }
 }
 
 void TypeCheck::visit(const NamedExpr& NamedExpr) {
     const auto& NameRef = *SemanInfo.getReferencedName(NamedExpr.getIdentifier());
-    returnValue(SemanInfo.getType(NameRef));
+    returnValue({ SemanInfo.getType(NameRef), true });
 }
 
 void TypeCheck::visit(const FunctionCallExpr& FunctionCallExpr) {
-    const auto InnerTy = doVisit(FunctionCallExpr.getFunction());
+    const Type* InnerTy = check(FunctionCallExpr.getFunction());
 
     if (InnerTy->getTag() == TypeTag::Function) {
-        const auto& FunctionTy = InnerTy->as<const FunctionType>();
+        const auto& FunctionTy = InnerTy->as<FunctionType>();
         validateCallArgs(FunctionTy, FunctionCallExpr);
         returnValue(FunctionTy.getReturnType());
     } else {
@@ -47,10 +46,10 @@ void TypeCheck::visit(const ReturnStmt& ReturnStmt) {
     auto RetValueType = SemanInfo.getTyContext().getVoidType();
     auto ReturnVal = ReturnStmt.getValue();
     if (ReturnVal) {
-        RetValueType = doVisit(*ReturnVal);
+        RetValueType = check(*ReturnVal);
     }
 
-    auto FuncRetType = SemanInfo.getType(*CurrentFunction)->as<const FunctionType>().getReturnType();
+    auto FuncRetType = SemanInfo.getType(*CurrentFunction)->as<FunctionType>().getReturnType();
 
     if (RetValueType != FuncRetType) {
         const auto Msg = std::format("expected return type '{}', found '{}'", FuncRetType->toString(), RetValueType->toString());
@@ -64,17 +63,21 @@ void TypeCheck::visit(const FunctionDecl& FunctionDecl) {
 }
 
 void TypeCheck::visit(const LetStmt& LetStmt) {
-    const auto ExprTy = doVisit(*LetStmt.getValue()); // TODO empty rhs
+    const auto Value = LetStmt.getValue();
     const auto LetTy = SemanInfo.getType(LetStmt);
-    if (LetTy != ExprTy) {
-        const auto Msg = std::format("expected type '{}', found '{}'", ExprTy->toString(), LetTy->toString());
-        SemanInfo.error(LetStmt.getValue()->getRange(), Msg);
+    if (Value) {
+        const Type* ExprTy = check(*LetStmt.getValue()); // TODO empty rhs
+        if (LetTy != ExprTy) {
+            const auto Msg = std::format("expected type '{}', found '{}'", LetTy->toString(), ExprTy->toString());
+            SemanInfo.error(LetStmt.getValue()->getRange(), Msg);
+        }
     }
+
 }
 
 void TypeCheck::visit(const WhileStmt& WhileStmt) {
     const auto& Cond = WhileStmt.getCondition();
-    const auto CondTy = doVisit(Cond);
+    const Type* CondTy = check(Cond);
     if (CondTy != SemanInfo.getTyContext().getBoolType()) {
         const auto Msg = std::format("while condition expects a bool type, found '{}' instead", CondTy->toString());
         SemanInfo.error(Cond.getRange(), Msg);
@@ -85,7 +88,7 @@ void TypeCheck::visit(const WhileStmt& WhileStmt) {
 
 void TypeCheck::visit(const IfStmt& IfStmt) {
     const auto& Cond = IfStmt.getCondition();
-    const auto CondTy = doVisit(Cond);
+    const Type* CondTy = check(Cond);
     if (CondTy != SemanInfo.getTyContext().getBoolType()) {
         const auto Msg = std::format("if condition expects a bool type, found '{}' instead", CondTy->toString());
         SemanInfo.error(Cond.getRange(), Msg);
@@ -98,10 +101,10 @@ void TypeCheck::visit(const IfStmt& IfStmt) {
 }
 
 void TypeCheck::visit(const UnaryOpExpr& UnaryOpExpr) {
-    const auto ExprTy = doVisit(UnaryOpExpr.getValue());
+    const Type* ExprTy = check(UnaryOpExpr.getValue());
     const auto ResultTy = ExprTy->applyUnaryOp(UnaryOpExpr.getKind());
 
-    returnValue(ResultTy);
+    returnValue({ ResultTy });
 }
 
 void TypeCheck::visit(const StructDecl& StructDecl) {
@@ -110,27 +113,75 @@ void TypeCheck::visit(const StructDecl& StructDecl) {
 
 void TypeCheck::visit(const SubscriptExpr& SubscriptExpr) {
     const auto& Expr = SubscriptExpr.getExpr();
-    const auto ExprTy = doVisit(Expr);
+    const Type* ExprTy = check(Expr);
 
+    bool Fail = false;
     if (ExprTy->getTag() != TypeTag::Array) {
         SemanInfo.error(Expr.getRange(), "must be array type");
-    } else {
-        const auto& ArrayTy = ExprTy->as<const ArrayType&>();
-        returnValue(ArrayTy.getElementType());
+        Fail = true;
     }
 
     const auto& Subscript = SubscriptExpr.getSubscript();
-    const auto SubscriptTy = doVisit(Subscript);
+    const Type* SubscriptTy = check(Subscript);
 
     if (SubscriptTy->getTag() != TypeTag::Integer) {
         SemanInfo.error(Subscript.getRange(), "subscript must be of type integer");
+        Fail = true;
     }
+
+    if (!Fail) {
+        const auto& ArrayTy = ExprTy->as<ArrayType>();
+        returnValue({ ArrayTy.getElementType(), true });
+    }
+}
+
+void TypeCheck::visit(const AssignStmt& AssignStmt) {
+    const auto LeftRes = check(AssignStmt.getLeft());
+
+    const auto& Right = AssignStmt.getRight();
+    const Type* RightTy = check(Right);
+
+    if (LeftRes.isLValue()) {
+        const auto LeftTy = LeftRes.getType();
+        if (LeftTy != RightTy) {
+            const auto Msg = std::format("expected type '{}', found '{}'", LeftTy->toString(), RightTy->toString());
+            SemanInfo.error(Right.getRange(), Msg);
+        }
+    } else {
+        const auto Msg = std::format("left hand side of assignment must be an lvalue");
+        SemanInfo.error(AssignStmt.getLeft().getRange(), Msg);
+    }
+}
+
+void TypeCheck::visit(const DotExpr& DotExpr) {
+    const auto LeftRes = check(DotExpr.getExpr());
+    const auto& Identifier = DotExpr.getIdentifier();
+
+    if (LeftRes.getType()->getTag() == TypeTag::Struct) {
+        const auto& StructTy = LeftRes.getType()->as<StructType>();
+        const auto [Field, FieldTy] = getStructField(StructTy, Identifier.getName());
+
+        if (!Field) {
+            const auto Msg = std::format("type '{}' has no field named '{}'", StructTy.toString(), Identifier.getName());
+            SemanInfo.error(Identifier.getRange(), Msg);
+        } else {
+            returnValue({ FieldTy, LeftRes.isLValue() });
+        }
+    } else {
+        const auto Msg = std::format("left hand side must be of a struct type");
+        SemanInfo.error(DotExpr.getExpr().getRange(), Msg);
+    }
+}
+
+ExprResult TypeCheck::check(const AstBase& Node) {
+    returnValue({});
+    return doVisit(Node);
 }
 
 void TypeCheck::validateCallArgs(const FunctionType& FunctionTy, const FunctionCallExpr& FunctionCallExpr) {
     std::vector<const Type*> ArgTypes;
     for (auto& Arg : FunctionCallExpr.getArgs()) {
-        ArgTypes.push_back(doVisit(*Arg));
+        ArgTypes.push_back(check(*Arg));
     }
 
     const auto& ParamTypes = FunctionTy.getParamTypes();
@@ -145,5 +196,14 @@ void TypeCheck::validateCallArgs(const FunctionType& FunctionTy, const FunctionC
             }
         }
     }
+}
+
+std::pair<const StructDeclField*, const Type*> TypeCheck::getStructField(
+    const StructType& StructTy, const std::string& FieldName) const {
+    const auto Field = StructTy.getField(FieldName);
+    if (!Field) {
+        return { nullptr, nullptr };
+    }
+    return { Field, SemanInfo.getType(*Field) };
 }
 

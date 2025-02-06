@@ -30,7 +30,7 @@ public:
     auto& operator=(const Type&&) = delete;
 
     template <typename T>
-    const T& as() const { return static_cast<T&>(*this); }
+    const T& as() const { return static_cast<const T&>(*this); }
 
     [[nodiscard]] virtual std::string toString() const = 0;
     virtual const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const { return nullptr; }
@@ -165,6 +165,7 @@ private:
 };
 
 class StructDecl;
+struct StructDeclField;
 
 class StructType final : public Type {
 public:
@@ -173,7 +174,7 @@ public:
     }
 
     std::string toString() const override { return Name; }
-    const Type* getField(const std::string& FieldName) const;
+    const StructDeclField* getField(const std::string& FieldName) const;
     std::string getName() const { return Name; }
     const auto& getDecl() const { return Decl; }
     TypeTag getTag() const override { return TypeTag::Struct; }
