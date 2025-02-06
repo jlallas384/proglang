@@ -9,7 +9,8 @@ TypeContext::TypeContext() :
     F32Ty(*this, "f32", 32),
     F64Ty(*this, "f64", 64),
     BoolTy(*this, "bool"),
-    BuiltinTypes({&I8Ty, &I16Ty, &I32Ty, &I64Ty, &F32Ty, &F64Ty, &BoolTy})
+    VoidTy(*this, "void"),
+    BuiltinTypes({ &I8Ty, &I16Ty, &I32Ty, &I64Ty, &F32Ty, &F64Ty, &BoolTy, &VoidTy })
 {
 }
 
@@ -54,7 +55,7 @@ const UnresolvedType* TypeContext::createUnresolvedType(IdentifierSymbol Identif
     return UnresolvedTypes.back().get();
 }
 
-const StructType* TypeContext::createStructType(std::string Name, std::map<std::string, const Type*> Fields) {
-    StructTypes.push_back(std::make_unique<StructType>(*this, std::move(Name), std::move(Fields)));
+const StructType* TypeContext::createStructType(std::string Name, const StructDecl& Decl) {
+    StructTypes.push_back(std::make_unique<StructType>(*this, std::move(Name), Decl));
     return StructTypes.back().get();
 }

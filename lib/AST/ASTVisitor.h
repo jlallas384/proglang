@@ -14,6 +14,7 @@ public:
     virtual void visit(const NamedExpr&);
     virtual void visit(const DotExpr&);
     virtual void visit(const CastExpr&);
+    virtual void visit(const SubscriptExpr&);
 
     virtual void visit(const IfStmt&);
     virtual void visit(const WhileStmt&);

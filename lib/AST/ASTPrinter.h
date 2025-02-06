@@ -21,6 +21,7 @@ public:
     void visit(const Module&) override;
     void visit(const ExpressionStmt&) override;
     void visit(const StructDecl&) override;
+    void visit(const SubscriptExpr&) override;
 private:
     struct AstScopeGuard {
         AstScopeGuard(AstPrinter& Printer, std::string_view Name);

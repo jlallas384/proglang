@@ -27,9 +27,12 @@ void PrimitiveType::accept(TypeVisitor& Visitor) const {
 
 const Type* IntegerType::applyBinaryOp(TokenKind OpKind, const Type* Other) const {
     if (this == Other) {
+        if (isRelationalOperator(OpKind)) {
+            return Context.getBoolType();
+        }
         return this;
     }
-    if (dynamic_cast<const PointerType*>(Other)) {
+    if (Other->getTag() == TypeTag::Pointer) {
         if (OpKind == TokenKind::Plus || OpKind == TokenKind::Minus) {
             return Other;
         }
@@ -37,7 +40,7 @@ const Type* IntegerType::applyBinaryOp(TokenKind OpKind, const Type* Other) cons
     return nullptr;
 }
 
-const Type* IntegerType::applyUnaryOp(TokenKind OpKind, const Type* Other) const {
+const Type* IntegerType::applyUnaryOp(TokenKind OpKind) const {
     if (OpKind == TokenKind::Amp) {
         return Context.getPointerType(this);
     }
@@ -53,12 +56,15 @@ void IntegerType::accept(TypeVisitor& Visitor) const {
 
 const Type* FloatingPointType::applyBinaryOp(TokenKind OpKind, const Type* Other) const {
     if (this == Other) {
+        if (isRelationalOperator(OpKind)) {
+            return Context.getBoolType();
+        }
         return this;
     }
     return nullptr;
 }
 
-const Type* FloatingPointType::applyUnaryOp(TokenKind OpKind, const Type* Other) const {
+const Type* FloatingPointType::applyUnaryOp(TokenKind OpKind) const {
     if (OpKind == TokenKind::Amp) {
         return Context.getPointerType(this);
     }
@@ -86,13 +92,14 @@ void FunctionType::accept(TypeVisitor& Visitor) const {
 }
 
 const Type* PointerType::applyBinaryOp(TokenKind OpKind, const Type* Other) const {
-    if (const auto Ptr = dynamic_cast<const IntegerType*>(Other)) {
-        return Ptr->applyBinaryOp(OpKind, Other);
+    if (Other->getTag() == TypeTag::Integer) {
+        const auto& Ptr = Other->as<const IntegerType>();
+        return Ptr.applyBinaryOp(OpKind, Other);
     }
     return nullptr;
 }
 
-const Type* PointerType::applyUnaryOp(TokenKind OpKind, const Type* Other) const {
+const Type* PointerType::applyUnaryOp(TokenKind OpKind) const {
     if (OpKind == TokenKind::Star) {
         return ElementType;
     }
@@ -119,11 +126,10 @@ void UnresolvedType::accept(TypeVisitor& Visitor) const {
 }
 
 const Type* StructType::getField(const std::string& FieldName) const {
-    const auto Iter = Fields.find(FieldName);
-    return Iter == Fields.end() ? nullptr : Iter->second;
+    return nullptr; // TODO
 }
 
-const Type* StructType::applyUnaryOp(TokenKind OpKind, const Type* Other) const {
+const Type* StructType::applyUnaryOp(TokenKind OpKind) const {
     if (OpKind == TokenKind::Amp) {
         return Context.getPointerType(this);
     }

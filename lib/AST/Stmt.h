@@ -25,17 +25,15 @@ private:
     AstPtr<Statement> TrueBlock, FalseBlock;
 };
 
-class LetStmt : public Statement {
+class LetStmt : public Statement, public Nameable {
 public:
-    LetStmt(std::string Name, const Type* VarType, AstPtr<Expression> Value) :
-        Name(std::move(Name)), VarType(VarType), Value(std::move(Value)) {}
-    const std::string& getIdentifier() const { return Name; }
-    const Type* getType() const { return VarType; }
+    LetStmt(IdentifierSymbol Identifier, const TypeInfo &TyInfo, AstPtr<Expression> Value) :
+        Nameable(std::move(Identifier)), TyInfo(TyInfo), Value(std::move(Value)) {}
+    const auto& getTypeInfo() const { return TyInfo; }
     const Expression* getValue() const { return Value.get();  }
     void accept(AstVisitor& Visitor) const override;
 private:
-    std::string Name;
-    const Type* VarType;
+    TypeInfo TyInfo;
     AstPtr<Expression> Value;
 };
 

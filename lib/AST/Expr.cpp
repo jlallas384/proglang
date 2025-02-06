@@ -28,3 +28,7 @@ void DotExpr::accept(AstVisitor& Visitor) const {
 void CastExpr::accept(AstVisitor& Visitor) const {
     Visitor.visit(*this);
 }
+
+void SubscriptExpr::accept(AstVisitor& Visitor) const {
+    Visitor.visit(*this);
+}

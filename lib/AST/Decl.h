@@ -8,40 +8,36 @@ class Declaration : public AstBase {
 };
 
 
-class FunctionDecl final : public Declaration {
+class FunctionDecl final : public Declaration, public Nameable {
 public:
-    struct Param {
-        IdentifierSymbol Identifier;
+    struct Param : Nameable {
+        Param(IdentifierSymbol Identifier, const Type* ParamType) : Nameable(std::move(Identifier)), ParamType(ParamType) {}
         const Type* ParamType;
     };
     FunctionDecl(IdentifierSymbol Identifier, const Type* RetType, std::vector<Param> Params, AstPtr<Statement> Body) :
-        Identifier(std::move(Identifier)), RetType(RetType), Params(std::move(Params)), Body(std::move(Body)) {}
+        Nameable(std::move(Identifier)), RetType(RetType), Params(std::move(Params)), Body(std::move(Body)) {}
     [[nodiscard]] const Statement& getBody() const {
         return *Body;
     }
-    const auto& getIdentifier() const { return Identifier; }
     const Type& getRetType() const { return *RetType; }
     const auto& getParams() const { return Params; }
     void accept(AstVisitor& Visitor) const override;
 private:
-    IdentifierSymbol Identifier;
     const Type* RetType;
     std::vector<Param> Params;
     AstPtr<Statement> Body;
 };
 
 
-class StructDecl final : public Declaration {
+class StructDecl final : public Declaration, public Nameable {
 public:
-    struct Field {
-        IdentifierSymbol Identifier;
+    struct Field : Nameable {
+        Field(IdentifierSymbol Identifier, const Type* FieldType) : Nameable(std::move(Identifier)), FieldType(FieldType) {}
         const Type* FieldType;
     };
-    StructDecl(IdentifierSymbol Identifier, std::vector<Field> Fields) : Identifier(std::move(Identifier)), Fields(std::move(Fields)) {}
-    const auto& getIdentifier() const { return Identifier; }
+    StructDecl(IdentifierSymbol Identifier, std::vector<Field> Fields) : Nameable(std::move(Identifier)), Fields(std::move(Fields)) {}
     auto& getFields() const { return Fields; }
     void accept(AstVisitor& Visitor) const override;
 private:
-    IdentifierSymbol Identifier;
     std::vector<Field> Fields;
 };

@@ -35,7 +35,7 @@ set(sources
     "Seman/NameResolver.cpp"
     "Seman/Scope.h"
     
-    "Seman/Symbol.h"
+    
     "Seman/Validator.h"
     "Seman/Validator.cpp"
     "Seman/TypeCheck.h"
@@ -43,7 +43,7 @@ set(sources
     "Utils/SourceManager.h" 
     "Utils/SourceManager.cpp" "AST/Identifier.h"
     "Parser/TokenKind.h"    
-)
+ "Seman/TypeValidator.h" "Seman/TypeValidator.cpp")
 
 add_library(Lib ${sources})
 target_compile_features(Lib PRIVATE cxx_std_23)

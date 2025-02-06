@@ -102,3 +102,17 @@ inline std::string_view kindToString(TokenKind Kind) {
     }
     return "unknown";
 }
+
+inline bool isRelationalOperator(TokenKind Kind) {
+    switch (Kind) {
+        case TokenKind::EqualEqual:
+        case TokenKind::NotEqual:
+        case TokenKind::Less:
+        case TokenKind::LessEqual:
+        case TokenKind::Greater:
+        case TokenKind::GreaterEqual:
+            return true;
+        default:
+            return false;
+    }
+}

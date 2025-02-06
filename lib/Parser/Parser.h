@@ -47,9 +47,9 @@ private:
     std::vector<AstPtr<Expression>> parseCallArgs();
     AstPtr<Expression> parsePrimaryExpr();
 
-    const Type* parseTypeAnnotation();
-    const Type* parseArrayType();
-    const Type* parseType();
+    TypeInfo parseTypeAnnotation();
+    TypeInfo parseArrayType();
+    TypeInfo parseType();
 
     ErrorReporter& Reporter;
     std::shared_ptr<TypeContext> TyContext;

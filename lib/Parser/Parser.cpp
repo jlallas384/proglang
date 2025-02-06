@@ -64,16 +64,16 @@ AstPtr<Declaration> Parser::parseFunctionDecl() {
     std::vector<FunctionDecl::Param> Params;
     if (!CurTok.is(TokenKind::RightParen)) {
         const auto ParamName = expectIdentifier();
-        Params.emplace_back(ParamName, parseTypeAnnotation());
+        Params.emplace_back(ParamName, parseTypeAnnotation().getType());
     }
     while (!consumeToken(TokenKind::RightParen)) {
         expectToken(TokenKind::Comma);
         const auto ParamName = expectIdentifier();
-        Params.emplace_back(ParamName, parseTypeAnnotation());
+        Params.emplace_back(ParamName, parseTypeAnnotation().getType());
     }
     auto RetType = parseTypeAnnotation();
     AstPtr<Statement> Body = parseCompoundStmt();
-    return std::make_unique<FunctionDecl>(Name, RetType, std::move(Params), std::move(Body));
+    return std::make_unique<FunctionDecl>(Name, RetType.getType(), std::move(Params), std::move(Body));
 }
 
 AstPtr<Declaration> Parser::parseStructDecl() {
@@ -81,14 +81,15 @@ AstPtr<Declaration> Parser::parseStructDecl() {
     auto Name = expectIdentifier();
     expectToken(TokenKind::LeftBrace);
     std::vector<StructDecl::Field> Fields;
+    auto FirstFieldIdentifier = expectIdentifier();
     StructDecl::Field Field = {
-        expectIdentifier(),
-        parseTypeAnnotation()
+        FirstFieldIdentifier,
+        parseTypeAnnotation().getType()
     };
     Fields.push_back(std::move(Field));
     while (consumeToken(TokenKind::Comma)) {
         auto FieldName = expectIdentifier();
-        Fields.emplace_back(FieldName, parseTypeAnnotation());
+        Fields.emplace_back(FieldName, parseTypeAnnotation().getType());
     }
     expectToken(TokenKind::RightBrace);
     return std::make_unique<StructDecl>(Name, std::move(Fields));
@@ -149,7 +150,7 @@ AstPtr<Statement> Parser::parseLetStmt() {
     expectToken(TokenKind::Equal);
     auto Value = parseExpr();
     expectToken(TokenKind::Semicolon);
-    return std::make_unique<LetStmt>(std::move(Name).getName(), Type, std::move(Value)); // TODO 
+    return std::make_unique<LetStmt>(std::move(Name), Type, std::move(Value));
 }
 
 AstPtr<Statement> Parser::parseReturnStmt() {
@@ -257,6 +258,13 @@ AstPtr<Expression> Parser::parsePostFixExpr() {
             Expr = std::make_unique<FunctionCallExpr>(std::move(Expr), std::move(Args), RParen.getEnd());
             break;
         }
+        case TokenKind::LeftSqrBrace: {
+            advanceToken();
+            auto Subscript = parseExpr();
+            const auto RSqrBrace = expectToken(TokenKind::RightSqrBrace);
+            Expr = std::make_unique<SubscriptExpr>(std::move(Expr), std::move(Subscript), RSqrBrace.getEnd());
+            break;
+        }
         default:
             break;
     }
@@ -304,25 +312,33 @@ AstPtr<Expression> Parser::parsePrimaryExpr() {
     return Expr;
 }
 
-const Type* Parser::parseTypeAnnotation() {
+TypeInfo Parser::parseTypeAnnotation() {
     expectToken(TokenKind::Colon);
     return parseType();
 }
 
-const Type* Parser::parseArrayType() {
-    expectToken(TokenKind::LeftSqrBrace);
-    auto Inner = parseType();
+TypeInfo Parser::parseArrayType() {
+    const auto LeftSqrBraceTok = expectToken(TokenKind::LeftSqrBrace);
+
+    const auto InnerTypeInfo = parseType();
+    const auto InnerType = InnerTypeInfo.getType();
+
     expectToken(TokenKind::Comma);
-    auto SizeTok = expectToken(TokenKind::Integer);
-    auto Size = std::stoi(SizeTok.getValue());
-    expectToken(TokenKind::RightSqrBrace);
-    return TyContext->getArrayType(Inner, Size);
+
+    const auto SizeTok = expectToken(TokenKind::Integer);
+    const auto Size = std::stoi(SizeTok.getValue());
+
+    const auto RightSqrBraceTok = expectToken(TokenKind::RightSqrBrace);
+
+    const auto ArrType = TyContext->getArrayType(InnerType, Size);
+
+    return TypeInfo(ArrType, { LeftSqrBraceTok.getStart(), RightSqrBraceTok.getEnd() });
 }
 
-const Type* Parser::parseType() {
+TypeInfo Parser::parseType() {
     if (CurTok.is(TokenKind::LeftSqrBrace)) {
         return parseArrayType();
     }
     const auto Name = expectIdentifier();
-    return TyContext->createUnresolvedType(Name);
+    return TypeInfo(TyContext->createUnresolvedType(Name), Name.getRange());
 }

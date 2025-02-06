@@ -1,7 +1,6 @@
 #pragma once
 #include "AST/ASTVisitor.h"
 #include "Scope.h"
-#include "Symbol.h"
 #include <map>
 
 class Seman;
@@ -14,8 +13,11 @@ public:
     void visit(const LetStmt&) override;
     void visit(const CompoundStmt&) override;
     void visit(const NamedExpr&) override;
+    void visit(const CastExpr&) override;
+    void visit(const StructDecl&) override;
 private:
+    const Type* tryResolveType(const Type& Ty);
     Seman& SemanInfo;
     std::map<std::string, const Type*> Types;
-    std::unique_ptr<Scope<Symbol>> CurrentScope = nullptr;
+    std::unique_ptr<Scope<const Nameable*>> CurrentScope = nullptr;
 }; 

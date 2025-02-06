@@ -30,6 +30,11 @@ void AstVisitor::visit(const CastExpr& Node) {
     Node.getValue().accept(*this);
 }
 
+void AstVisitor::visit(const SubscriptExpr& Node) {
+    Node.getExpr().accept(*this);
+    Node.getSubscript().accept(*this);
+}
+
 void AstVisitor::visit(const IfStmt& Node) {
     Node.getCondition().accept(*this);
     Node.getTrueBlock()->accept(*this);

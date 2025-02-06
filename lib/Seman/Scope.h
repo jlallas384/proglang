@@ -2,6 +2,7 @@
 #include <string>
 #include <cassert>
 #include <memory>
+#include <map>
 
 template <typename Value>
 class Scope {

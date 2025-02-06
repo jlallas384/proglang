@@ -1,6 +1,5 @@
 #pragma once
 #include "ASTBase.h"
-#include "Parser/Token.h"
 #include "Type.h"
 #include "Utils/Literal.h"
 #include "Identifier.h"
@@ -8,9 +7,7 @@
 
 class Expression : public AstBase {
 public:
-    virtual SourceRange getRange() const {
-        return SourceRange{{1, 1}, {1, 1}};
-    };
+    virtual SourceRange getRange() const = 0;
     SourceLoc getStart() const { return getRange().Start; }
     SourceLoc getEnd() const { return getRange().End; }
 };
@@ -134,14 +131,37 @@ private:
 
 class CastExpr : public Expression {
 public:
-    CastExpr(const Type* CastType, AstPtr<Expression> Value) : CastType(CastType), Value(std::move(Value)) {
+    CastExpr(const TypeInfo& TyInfo, AstPtr<Expression> Value) : TyInfo(TyInfo), Value(std::move(Value)) {
     }
 
     void accept(AstVisitor& Visitor) const override;
-    [[nodiscard]] const Type& getType() const { return *CastType; }
+    [[nodiscard]] auto& getTypeInfo() const { return TyInfo; }
     [[nodiscard]] const Expression& getValue() const { return *Value; }
 
+    SourceRange getRange() const override {
+        return {Value->getStart(), TyInfo.getRange().End};
+    }
+
 private:
-    const Type* CastType;
+    TypeInfo TyInfo;
     AstPtr<Expression> Value;
+};
+
+class SubscriptExpr : public Expression {
+public:
+    SubscriptExpr(AstPtr<Expression> Expr, AstPtr<Expression> Subscript, SourceLoc EndLoc) :
+        Expr(std::move(Expr)), Subscript(std::move(Subscript)), EndLoc(EndLoc) {
+        
+    }
+
+    void accept(AstVisitor& Visitor) const override;
+    const auto& getExpr() const { return *Expr; }
+    const auto& getSubscript() const { return *Subscript; }
+    SourceRange getRange() const override {
+        return { Expr->getStart(), EndLoc };
+    }
+
+private:
+    AstPtr<Expression> Expr, Subscript;
+    SourceLoc EndLoc;
 };

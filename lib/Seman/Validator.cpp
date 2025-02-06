@@ -1,32 +1,38 @@
 #include "Validator.h"
+#include "Seman.h"
 #include "AST/TypeContext.h"
+#include <ranges>
 #include <set>
 #include <string>
-#include <ranges>
-#include <iostream>
+#include <format>
 
-Validator::Validator(TypeContext& TyContext) : TyContext(TyContext) {
+
+Validator::Validator(Seman& SemanInfo, TypeContext& TyContext) : SemanInfo(SemanInfo), TyContext(TyContext) {
 }
 
 void Validator::visit(const FunctionDecl& FunctionDecl) {
     std::set<std::string> ParamNames;
-    for (auto &[Identifier, _] : FunctionDecl.getParams()) {
-        if (ParamNames.contains(Identifier.getName())) {
-            std::cout << "multiple param names\n";
+    for (auto& Param : FunctionDecl.getParams()) {
+        auto& ParamName = Param.getName();
+        if (ParamNames.contains(ParamName)) {
+            const auto Msg = std::format("parameter name '{}' is already used", ParamName);
+            SemanInfo.error(Param.getIdentifier().getRange(), Msg);
             return returnValue(true);
         }
-        ParamNames.insert(Identifier.getName());
+        ParamNames.insert(ParamName);
     }
 }
 
 void Validator::visit(const StructDecl& StructDecl) {
     std::set<std::string> FieldNames;
-    for (auto &[Identifier, _] : StructDecl.getFields()) {
-        if (FieldNames.contains(Identifier.getName())) {
-            std::cout << "multiple field names\n";
+    for (auto& Field : StructDecl.getFields()) {
+        auto& FieldName = Field.getName();
+        if (FieldNames.contains(FieldName)) {
+            const auto Msg = std::format("field name '{}' is already used", FieldName);
+            SemanInfo.error(Field.getIdentifier().getRange(), Msg);
             return returnValue(true);
         }
-        FieldNames.insert(Identifier.getName());
+        FieldNames.insert(FieldName);
     }
 
     const auto Iter = std::ranges::find_if(StructTypes, [&StructDecl](auto& StructTy) {
@@ -37,12 +43,9 @@ void Validator::visit(const StructDecl& StructDecl) {
         return;
     }
 
-    std::map<std::string, const Type*> Fields;
-    for (auto &[Identifier, Ty] : StructDecl.getFields()) {
-        Fields.emplace(Identifier.getName(), Ty);
-    }
-    const auto Ty = TyContext.createStructType(StructDecl.getIdentifier().getName(), Fields);
+    const auto Ty = TyContext.createStructType(StructDecl.getIdentifier().getName(), StructDecl);
     StructTypes.push_back(Ty);
+    SemanInfo.setType(StructDecl, Ty);
 }
 
 void Validator::visit(const WhileStmt& WhileStmt) {

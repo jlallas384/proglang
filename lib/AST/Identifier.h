@@ -12,3 +12,12 @@ private:
     std::string Name;
     SourceRange Range;
 };
+
+class Nameable {
+public:
+    explicit Nameable(IdentifierSymbol Identifier) : Identifier(std::move(Identifier)) {}
+    const auto& getIdentifier() const { return Identifier; }
+    const auto& getName() const { return Identifier.getName(); }
+private:
+    IdentifierSymbol Identifier;
+};
