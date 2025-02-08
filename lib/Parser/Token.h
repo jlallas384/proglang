@@ -5,7 +5,7 @@
 
 class Token {
 public:
-    Token(TokenKind Kind, SourceLoc Start, std::string Value) : Kind(Kind), Range({Start, Value.size()}), Value(std::move(Value)) {
+    Token(TokenKind Kind, SourceLoc Start, std::string_view Value) : Kind(Kind), Range({Start, Value.size()}), Value(Value) {
     }
 
     template <typename... T>
@@ -25,5 +25,5 @@ public:
 private:
     TokenKind Kind;
     SourceRange Range;
-    std::string Value;
+    std::string_view Value;
 };

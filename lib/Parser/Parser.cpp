@@ -1,4 +1,7 @@
 #include "Parser.h"
+
+#include <assert.h>
+
 #include "Utils/ErrorReporter.h"
 #include "AST/Decl.h"
 #include "AST/Stmt.h"
@@ -11,7 +14,7 @@ AstPtr<Module> Parser::parseSourceFile(SourceFile& Source, ErrorReporter& Report
 }
 
 Parser::Parser(SourceFile& Source, ErrorReporter& Reporter) : Reporter(Reporter), Source(Source),
-                                                             Lex(this->Source), CurTok(Lex.nextToken()) {
+                                                             Lex(Source.getSourceCode()), CurTok(Lex.nextToken()) {
 }
 
 template <typename... T>
@@ -35,7 +38,7 @@ Token Parser::expectToken(TokenKind Kind) {
 
 IdentifierSymbol Parser::expectIdentifier() {
     const auto Tok = expectToken(TokenKind::Identifier);
-    return { Tok.getValue(), Tok.getRange() };
+    return { std::string(Tok.getValue()), Tok.getRange() };
 }
 
 Token Parser::advanceToken() {
@@ -52,6 +55,8 @@ AstPtr<Module> Parser::parseModule(std::shared_ptr<TypeContext> TypeContext) {
             Nodes.push_back(parseFunctionDecl());
         } else if (CurTok.is(TokenKind::Struct)) {
             Nodes.push_back(parseStructDecl());
+        } else {
+            assert(false);
         }
     }
     return std::make_unique<Module>(std::move(Nodes), std::move(TyContext), Source);
@@ -296,7 +301,7 @@ AstPtr<Expression> Parser::parsePrimaryExpr() {
     AstPtr<Expression> Expr = nullptr;
     switch (CurTok.getKind()) {
         case TokenKind::Integer:
-            Expr = std::make_unique<LiteralExpr>(IntLiteral{ std::stoull(CurTok.getValue()) }, CurTok.getRange());
+            Expr = std::make_unique<LiteralExpr>(IntLiteral{ std::stoull(std::string(CurTok.getValue())) }, CurTok.getRange());
             advanceToken();
             break;
         case TokenKind::True:
@@ -308,7 +313,7 @@ AstPtr<Expression> Parser::parsePrimaryExpr() {
             advanceToken();
             break;
         case TokenKind::Identifier:
-            Expr = std::make_unique<NamedExpr>(IdentifierSymbol{ CurTok.getValue(), CurTok.getRange() });
+            Expr = std::make_unique<NamedExpr>(IdentifierSymbol{ std::string(CurTok.getValue()), CurTok.getRange() });
             advanceToken();
             break;
         case TokenKind::LeftParen:
@@ -348,7 +353,7 @@ TypeInfo Parser::parseArrayType() {
     expectToken(TokenKind::Comma);
 
     const auto SizeTok = expectToken(TokenKind::Integer);
-    const auto Size = std::stoi(SizeTok.getValue());
+    const auto Size = std::stoi(std::string(SizeTok.getValue()));
 
     const auto RightSqrBraceTok = expectToken(TokenKind::RightSqrBrace);
 

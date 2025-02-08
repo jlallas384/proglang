@@ -4,6 +4,7 @@
 #include <ranges>
 #include <cctype>
 #include <utility>
+#include <cassert>
 
 namespace {
     constexpr auto kindRange(TokenKind Front, TokenKind Back) {
@@ -11,38 +12,23 @@ namespace {
             | std::views::transform([](auto E) { return static_cast<TokenKind>(E); });
     };
     constexpr auto Keywords = kindRange(TokenKind::While, TokenKind::Let);
-    constexpr auto OperatorDelimiters = kindRange(TokenKind::AmpAmp, TokenKind::Equal);
 }
 
 Token Lexer::nextToken() {
-    if (isEof()) {
-        return makeToken(TokenKind::Eof);
-    }
-    for (const auto Kind: OperatorDelimiters) {
-        const auto Str = kindToString(Kind);
-        size_t Matched = 0;
-        while (Matched < Str.size() && Matched + At < Source.length() && Str[Matched] == Source.at(At + Matched)) {
-            Matched++;
-        }
-        if (Matched == Str.size()) {
-            Buffer = Str;
-            At += Str.size();
-            return makeToken(Kind);
-        }
-    }
-    switch (Source.at(At)) {
+    Size = 0;
+    auto Kind = TokenKind::Eof;
+    switch (nextChar()) {
+        case '\0':
+            break;
         case '\r':
-            At++;
             return nextToken();
         case '\n': {
             LineNum++;
             Column = 0;
-            At++;
             return nextToken();
         }
         case ' ':
         case '\t': {
-            At++;
             Column++;
             return nextToken();
         }
@@ -56,22 +42,130 @@ Token Lexer::nextToken() {
         }
         case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
             return readInteger();
+        case '{':
+            Kind = TokenKind::LeftBrace;
+            break;
+        case '}':
+            Kind = TokenKind::RightBrace;
+            break;
+        case '[':
+            Kind = TokenKind::LeftSqrBrace;
+            break;
+        case ']':
+            Kind = TokenKind::RightSqrBrace;
+            break;
+        case '&':
+            Kind = TokenKind::Amp;
+            if (tryConsume('&')) {
+                Kind = TokenKind::AmpAmp;
+            }
+            break;
+        case '|':
+            Kind = TokenKind::Pipe;
+            if (tryConsume('|')) {
+                Kind = TokenKind::PipePipe;
+            }
+            break;
+        case '<':
+            Kind = TokenKind::Less;
+            if (tryConsume('<')) {
+                Kind = TokenKind::LessLess;
+            } else if (tryConsume('=')) {
+                Kind = TokenKind::LessEqual;
+            }
+            break;
+        case '>':
+            Kind = TokenKind::Greater;
+            if (tryConsume('>')) {
+                return makeToken(TokenKind::GreaterGreater);
+            }
+            if (tryConsume('=')) {
+                return makeToken(TokenKind::GreaterEqual);
+            }
+            break;
+        case ';':
+            Kind = TokenKind::Semicolon;
+            break;
+        case ':':
+            Kind = TokenKind::Colon;
+            break;
+        case '=':
+            Kind = TokenKind::Equal;
+            if (tryConsume('=')) {
+                Kind = TokenKind::EqualEqual;
+            }
+            break;
+        case '!':
+            Kind = TokenKind::ExclMark;
+            if (tryConsume('=')) {
+                Kind = TokenKind::NotEqual;
+            }
+            break;
+        case '.':
+            Kind = TokenKind::Dot;
+            break;
+        case '+':
+            Kind = TokenKind::Plus;
+            break;
+        case '-':
+            Kind = TokenKind::Minus;
+            break;
+        case '*':
+            Kind = TokenKind::Star;
+            break;
+        case '/':
+            Kind = TokenKind::Slash;
+            break;
+        case '%':
+            Kind = TokenKind::Amp;
+            break;
+        case '^':
+            Kind = TokenKind::Caret;
+            break;
+        case '(':
+            Kind = TokenKind::LeftParen;
+            break;
+        case ')':
+            Kind = TokenKind::RightParen;
+            break;
+        case ',':
+            Kind = TokenKind::Comma;
+            break;
         default:
-            return makeToken(TokenKind::Eof);
+            assert(false);
     }
+    return makeToken(Kind);
 }
 
+bool Lexer::tryConsume(char Chr) {
+    if (Source[At] == Chr) {
+        Size++;
+        At++;
+        return true;
+    }
+    return false;
+}
+
+char Lexer::nextChar() {
+    Size++;
+    if (isEof()) {
+        return 0;
+    }
+    return Source[At++];
+}
+
+
 Token Lexer::makeToken(TokenKind Kind) {
-    Token Ret = { Kind, {LineNum, Column}, Buffer };
-    Column += Buffer.size();
-    Buffer = "";
+    Token Ret = { Kind, {LineNum, Column}, Source.substr(At - Size, Size)};
+    Column += Size;
     return Ret;
 }
 
 Token Lexer::readIdentifierOrKeyword() {
-    while (!isEof() && (std::isalnum(Source.at(At)) || Source.at(At) == '_')) {
-        Buffer += Source.at(At++);
+    while (!isEof() && (std::isalnum(Source[At]) || Source[At] == '_')) {
+        nextChar();
     }
+    auto Buffer = Source.substr(At - Size, Size);
     const auto Iter = std::ranges::find_if(Keywords, [&](auto Kind) {
         return Buffer == kindToString(Kind);
     });
@@ -82,8 +176,8 @@ Token Lexer::readIdentifierOrKeyword() {
 }
 
 Token Lexer::readInteger() {
-    while (!isEof() && std::isdigit(Source.at(At))) {
-        Buffer += Source.at(At++);
+    while (!isEof() && std::isdigit(Source[At])) {
+        nextChar();
     }
     return makeToken(TokenKind::Integer);
 }
