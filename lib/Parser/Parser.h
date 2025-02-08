@@ -47,9 +47,11 @@ private:
     AstPtr<Expression> parsePostFixExpr();
     std::vector<AstPtr<Expression>> parseCallArgs();
     AstPtr<Expression> parsePrimaryExpr();
+    AstPtr<Expression> parseCompoundExpr();
 
     TypeInfo parseTypeAnnotation();
     TypeInfo parseArrayType();
+    TypeInfo parsePointerType();
     TypeInfo parseType();
 
     ErrorReporter& Reporter;

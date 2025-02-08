@@ -32,3 +32,7 @@ void CastExpr::accept(AstVisitor& Visitor) const {
 void SubscriptExpr::accept(AstVisitor& Visitor) const {
     Visitor.visit(*this);
 }
+
+void CompoundExpr::accept(AstVisitor& Visitor) const {
+    Visitor.visit(*this);
+}

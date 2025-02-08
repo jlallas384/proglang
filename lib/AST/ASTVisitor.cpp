@@ -35,6 +35,12 @@ void AstVisitor::visit(const SubscriptExpr& Node) {
     Node.getSubscript().accept(*this);
 }
 
+void AstVisitor::visit(const CompoundExpr& Node) {
+    for (const auto& Expr : Node.getExprs()) {
+        Expr->accept(*this);
+    }
+}
+
 void AstVisitor::visit(const IfStmt& Node) {
     Node.getCondition().accept(*this);
     Node.getTrueBlock()->accept(*this);

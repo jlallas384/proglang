@@ -29,12 +29,20 @@ public:
     auto& operator=(const Type&) = delete;
     auto& operator=(const Type&&) = delete;
 
+    bool isIntegerType() const { return getTag() == TypeTag::Integer; }
+    bool isFloatingPointType() const { return getTag() == TypeTag::FloatingPoint; }
+    bool isArithmeticType() const { return isIntegerType() || isFloatingPointType(); }
+    bool isBoolType() const;
+    bool isVoidType() const;
+    bool isPointerType() const { return getTag() == TypeTag::Pointer; }
+    bool isArrayType() const { return getTag() == TypeTag::Array; }
+    bool isFunctionType() const { return getTag() == TypeTag::Function; }
+    bool isStructType() const { return getTag() == TypeTag::Struct; }
+
     template <typename T>
     const T& as() const { return static_cast<const T&>(*this); }
 
     [[nodiscard]] virtual std::string toString() const = 0;
-    virtual const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const { return nullptr; }
-    virtual const Type* applyUnaryOp(TokenKind OpKind) const { return nullptr; }
 
     virtual TypeTag getTag() const = 0;
     virtual void accept(TypeVisitor& Visitor) const = 0;
@@ -52,7 +60,6 @@ public:
     std::string toString() const override { return Name; }
     TypeTag getTag() const override { return TypeTag::Primitive; }
 
-    const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const override;
     void accept(TypeVisitor& Visitor) const override;
 
 private:
@@ -69,8 +76,6 @@ public:
     bool getSign() const { return Sign; }
     TypeTag getTag() const override { return TypeTag::Integer; }
 
-    const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const override;
-    const Type* applyUnaryOp(TokenKind OpKind) const override;
     void accept(TypeVisitor& Visitor) const override;
 
 private:
@@ -87,8 +92,6 @@ public:
     std::uint8_t getWidth() const { return Width; }
     TypeTag getTag() const override { return TypeTag::FloatingPoint; }
 
-    const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const override;
-    const Type* applyUnaryOp(TokenKind OpKind) const override;
     void accept(TypeVisitor& Visitor) const override;
 
 private:
@@ -122,8 +125,6 @@ public:
     const Type* getElementType() const { return ElementType; }
     TypeTag getTag() const override { return TypeTag::Pointer; }
 
-    const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const override;
-    const Type* applyUnaryOp(TokenKind OpKind) const override;
     void accept(TypeVisitor& Visitor) const override;
 
 private:
@@ -140,8 +141,6 @@ public:
     std::uint32_t getSize() const { return Size; }
     TypeTag getTag() const override { return TypeTag::Array; }
 
-    const Type* applyBinaryOp(TokenKind OpKind, const Type* Other) const override { return nullptr; }
-    const Type* applyUnaryOp(TokenKind OpKind) const override { return nullptr; }
     void accept(TypeVisitor& Visitor) const override;
 
 private:
@@ -179,7 +178,6 @@ public:
     const auto& getDecl() const { return Decl; }
     TypeTag getTag() const override { return TypeTag::Struct; }
 
-    const Type* applyUnaryOp(TokenKind OpKind) const override;
     void accept(TypeVisitor& Visitor) const override;
 
 private:

@@ -316,8 +316,22 @@ AstPtr<Expression> Parser::parsePrimaryExpr() {
             Expr = parseExpr();
             expectToken(TokenKind::RightParen);
             break;
+        case TokenKind::LeftBrace:
+            return parseCompoundExpr();
     }
     return Expr;
+}
+
+AstPtr<Expression> Parser::parseCompoundExpr() {
+    const auto LeftBrcTok = expectToken(TokenKind::LeftBrace);
+    std::vector<AstPtr<Expression>> Exprs;
+    Exprs.push_back(parseExpr());
+    while (!CurTok.is(TokenKind::RightBrace)) {
+        expectToken(TokenKind::Comma);
+        Exprs.push_back(parseExpr());
+    }
+    const auto RightBrcTok = expectToken(TokenKind::RightBrace);
+    return std::make_unique<CompoundExpr>(std::move(Exprs), LeftBrcTok.getStart(), RightBrcTok.getEnd());
 }
 
 TypeInfo Parser::parseTypeAnnotation() {
@@ -343,9 +357,19 @@ TypeInfo Parser::parseArrayType() {
     return TypeInfo(ArrType, { LeftSqrBraceTok.getStart(), RightSqrBraceTok.getEnd() });
 }
 
+TypeInfo Parser::parsePointerType() {
+    const auto Star = expectToken(TokenKind::Star);
+    const auto InnerType = parseType();
+    return TypeInfo(TyContext->getPointerType(InnerType.getType()), { Star.getStart(), InnerType.getRange().End });
+}
+
 TypeInfo Parser::parseType() {
     if (CurTok.is(TokenKind::LeftSqrBrace)) {
         return parseArrayType();
+    }
+
+    if (CurTok.is(TokenKind::Star)) {
+        return parsePointerType();
     }
     const auto Name = expectIdentifier();
     return TypeInfo(TyContext->createUnresolvedType(Name), Name.getRange());

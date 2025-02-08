@@ -2,75 +2,26 @@
 #include "TypeContext.h"
 #include "TypeVisitor.h"
 #include "Decl.h"
-#include "Parser/Token.h"
 #include <format>
 #include <ranges>
 
-Type::Type(TypeContext& Context) : Context(Context) {
+bool Type::isBoolType() const {
+    return Context.getBoolType() == this;
 }
 
-const Type* PrimitiveType::applyBinaryOp(TokenKind OpKind, const Type* Other) const {
-    auto BoolTy = Context.getBoolType();
-    if (this == BoolTy) {
-        switch (OpKind) {
-            case TokenKind::AmpAmp:
-            case TokenKind::PipePipe:
-                return Other == BoolTy ? BoolTy : nullptr;
-            default:
-                return nullptr;
-        }
-    }
-    return nullptr;
+bool Type::isVoidType() const {
+    return Context.getVoidType() == this;
+}
+
+Type::Type(TypeContext& Context) : Context(Context) {
 }
 
 void PrimitiveType::accept(TypeVisitor& Visitor) const {
     Visitor.visit(*this);
 }
 
-const Type* IntegerType::applyBinaryOp(TokenKind OpKind, const Type* Other) const {
-    if (this == Other) {
-        if (isRelationalOperator(OpKind)) {
-            return Context.getBoolType();
-        }
-        return this;
-    }
-    if (Other->getTag() == TypeTag::Pointer) {
-        if (OpKind == TokenKind::Plus || OpKind == TokenKind::Minus) {
-            return Other;
-        }
-    }
-    return nullptr;
-}
-
-const Type* IntegerType::applyUnaryOp(TokenKind OpKind) const {
-    if (OpKind == TokenKind::Amp) {
-        return Context.getPointerType(this);
-    }
-    if (OpKind == TokenKind::ExclMark) {
-        return Context.getBoolType();
-    }
-    return this;
-}
-
 void IntegerType::accept(TypeVisitor& Visitor) const {
     Visitor.visit(*this);
-}
-
-const Type* FloatingPointType::applyBinaryOp(TokenKind OpKind, const Type* Other) const {
-    if (this == Other) {
-        if (isRelationalOperator(OpKind)) {
-            return Context.getBoolType();
-        }
-        return this;
-    }
-    return nullptr;
-}
-
-const Type* FloatingPointType::applyUnaryOp(TokenKind OpKind) const {
-    if (OpKind == TokenKind::Amp) {
-        return Context.getPointerType(this);
-    }
-    return this;
 }
 
 void FloatingPointType::accept(TypeVisitor& Visitor) const {
@@ -91,24 +42,6 @@ std::string FunctionType::toString() const {
 
 void FunctionType::accept(TypeVisitor& Visitor) const {
     Visitor.visit(*this);
-}
-
-const Type* PointerType::applyBinaryOp(TokenKind OpKind, const Type* Other) const {
-    if (Other->getTag() == TypeTag::Integer) {
-        const auto& Ptr = Other->as<IntegerType>();
-        return Ptr.applyBinaryOp(OpKind, Other);
-    }
-    return nullptr;
-}
-
-const Type* PointerType::applyUnaryOp(TokenKind OpKind) const {
-    if (OpKind == TokenKind::Star) {
-        return ElementType;
-    }
-    if (OpKind == TokenKind::Amp) {
-        return Context.getPointerType(this);
-    }
-    return nullptr;
 }
 
 void PointerType::accept(TypeVisitor& Visitor) const {
@@ -134,13 +67,6 @@ const StructDeclField* StructType::getField(const std::string& FieldName) const 
     });
     if (Iter != Fields.end()) {
         return &*Iter;
-    }
-    return nullptr;
-}
-
-const Type* StructType::applyUnaryOp(TokenKind OpKind) const {
-    if (OpKind == TokenKind::Amp) {
-        return Context.getPointerType(this);
     }
     return nullptr;
 }

@@ -165,3 +165,17 @@ private:
     AstPtr<Expression> Expr, Subscript;
     SourceLoc EndLoc;
 };
+
+class CompoundExpr : public Expression {
+public:
+    CompoundExpr(std::vector<AstPtr<Expression>> Exprs, SourceLoc StartLoc, SourceLoc EndLoc) :
+        Exprs(std::move(Exprs)), StartLoc(StartLoc), EndLoc(EndLoc) {}
+    void accept(AstVisitor& Visitor) const override;
+    const auto& getExprs() const { return Exprs; }
+    SourceRange getRange() const override {
+        return { StartLoc, EndLoc };
+    }
+private:
+    std::vector<AstPtr<Expression>> Exprs;
+    SourceLoc StartLoc, EndLoc;
+};

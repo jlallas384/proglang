@@ -199,6 +199,15 @@ void AstPrinter::visit(const AssignStmt& Node) {
     Node.getRight().accept(*this);
 }
 
+void AstPrinter::visit(const CompoundExpr& Node) {
+    AstScopeGuard Scoper(*this, "CompoundExpr");
+    printNodeInfo();
+    for (const auto& Expr : dropLast(Node.getExprs())) {
+        Expr->accept(*this);
+    }
+    Node.getExprs().back()->accept(*this);
+}
+
 AstPrinter::AstScopeGuard::AstScopeGuard(AstPrinter& Printer, std::string_view Name) : Printer(Printer) {
     Printer.printNodeName(Name);
     Printer.Parents.push_back(this);
