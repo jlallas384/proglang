@@ -31,9 +31,19 @@ void NameResolver::visit(const FunctionDecl& FunctionDecl) { //TODO take all fun
 
     for (const auto& Param : FunctionDecl.getParams()) {
         CurrentScope->insert(Param.getName(), &Param);
-
-        if (const auto ResolvedType = tryResolveType(*Param.ParamType)) {
+        if (Param.ParamType == nullptr) {
+            const auto Msg = "function parameter requires explicit type annotation";
+            SemanInfo.error(Param.getIdentifier().getRange(), Msg);
+            continue;
+        }
+        if (auto ResolvedType = tryResolveType(*Param.ParamType)) {
             SemanInfo.setType(Param, ResolvedType);
+
+            if (ResolvedType->isArrayType()) {
+                const auto ElemTy = ResolvedType->as<ArrayType>().getElementType();
+                ResolvedType = SemanInfo.getTyContext().getPointerType(ElemTy);
+            }
+
             ParamTypes.push_back(ResolvedType);
         }
     }

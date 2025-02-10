@@ -1,12 +1,11 @@
 #include "Parser.h"
 
-#include <assert.h>
-
 #include "Utils/ErrorReporter.h"
 #include "AST/Decl.h"
 #include "AST/Stmt.h"
 #include "AST/Module.h"
 #include <format>
+#include <cassert>
 
 AstPtr<Module> Parser::parseSourceFile(SourceFile& Source, ErrorReporter& Reporter, std::shared_ptr<TypeContext> TyContext) {
     Parser P(Source, Reporter);
@@ -30,10 +29,19 @@ std::optional<Token> Parser::consumeToken(T... Args) {
 Token Parser::expectToken(TokenKind Kind) {
     auto Tok = advanceToken();
     if (!Tok.is(Kind)) {
-        const auto Message = std::format("Expected '{}', found '{}'", kindToString(Kind), kindToString(Tok.getKind()));
+        const auto Message = std::format("expected '{}', found '{}'", kindToString(Kind), kindToString(Tok.getKind()));
         Reporter.error(Source, Tok.getRange(), Message);
     }
     return Tok;
+}
+
+void Parser::expectSemicolon() {
+    if (!consumeToken(TokenKind::Semicolon)) {
+        const auto& Tok = CurTok;
+        auto TokStr = Tok.getKind() == TokenKind::Eof ? "end of file" : Tok.getValue();
+        const auto Msg = std::format("expected ';' before '{}' token", TokStr);
+        Reporter.error(Source, Tok.getRange(), Msg);
+    }
 }
 
 IdentifierSymbol Parser::expectIdentifier() {
@@ -157,7 +165,7 @@ AstPtr<Statement> Parser::parseLetStmt() {
     if (consumeToken(TokenKind::Equal)) {
         Value = parseExpr();
     }
-    expectToken(TokenKind::Semicolon);
+    expectSemicolon();
     return std::make_unique<LetStmt>(std::move(Name), Type, std::move(Value));
 }
 
@@ -167,7 +175,7 @@ AstPtr<Statement> Parser::parseReturnStmt() {
     if (!CurTok.is(TokenKind::Semicolon)) {
         Expr = parseExpr();
     }
-    expectToken(TokenKind::Semicolon);
+    expectSemicolon();
     return std::make_unique<ReturnStmt>(std::move(Expr));
 }
 
@@ -177,14 +185,14 @@ AstPtr<Statement> Parser::parseExpressionOrAssignStmt() {
     if (CurTok.is(TokenKind::Equal)) {
         return parseAssignStmt(std::move(Expr));
     }
-    expectToken(TokenKind::Semicolon);
+    expectSemicolon();
     return std::make_unique<ExpressionStmt>(std::move(Expr));
 }
 
 AstPtr<Statement> Parser::parseAssignStmt(AstPtr<Expression> Left) {
     expectToken(TokenKind::Equal);
     auto Right = parseExpr();
-    expectToken(TokenKind::Semicolon);
+    expectSemicolon();
 
     return std::make_unique<AssignStmt>(std::move(Left), std::move(Right));
 }
@@ -322,7 +330,9 @@ AstPtr<Expression> Parser::parsePrimaryExpr() {
             expectToken(TokenKind::RightParen);
             break;
         case TokenKind::LeftBrace:
-            return parseCompoundExpr();
+            Expr = parseCompoundExpr();
+            break;
+        
     }
     return Expr;
 }
@@ -340,8 +350,10 @@ AstPtr<Expression> Parser::parseCompoundExpr() {
 }
 
 TypeInfo Parser::parseTypeAnnotation() {
-    expectToken(TokenKind::Colon);
-    return parseType();
+    if (consumeToken(TokenKind::Colon)) {
+        return parseType();
+    }
+    return TypeInfo{};
 }
 
 TypeInfo Parser::parseArrayType() {

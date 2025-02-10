@@ -24,6 +24,8 @@ private:
     template <typename... T>
     std::optional<Token> consumeToken(T... Args);
     Token expectToken(TokenKind Kind);
+    void expectSemicolon();
+
     IdentifierSymbol expectIdentifier();
     Token advanceToken();
 

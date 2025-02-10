@@ -37,7 +37,7 @@ public:
     BinaryOpExpr(TokenKind Kind, AstPtr<Expression> Left, AstPtr<Expression> Right) : Kind(Kind), Left(std::move(Left)),
         Right(std::move(Right)) {
     }
-
+    void fuck() {}
     [[nodiscard]] TokenKind getKind() const { return Kind; }
     [[nodiscard]] const Expression& getLeft() const { return *Left; }
     [[nodiscard]] const Expression& getRight() const { return *Right; }

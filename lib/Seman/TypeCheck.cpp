@@ -50,7 +50,14 @@ void TypeCheck::visit(const BinaryOpExpr& BinaryOpExpr) {
 
 void TypeCheck::visit(const NamedExpr& NamedExpr) {
     const auto& NameRef = *SemanInfo.getReferencedName(NamedExpr.getIdentifier());
-    returnValue({ SemanInfo.getType(NameRef), true });
+    auto Ty = SemanInfo.getType(NameRef);
+
+    if (Ty->isArrayType()) {
+        const auto& ArrTy = Ty->as<ArrayType>();
+        Ty = SemanInfo.getTyContext().getPointerType(ArrTy.getElementType());
+    }
+
+    returnValue({ Ty, true });
 }
 
 void TypeCheck::visit(const FunctionCallExpr& FunctionCallExpr) {
@@ -104,6 +111,20 @@ void TypeCheck::visit(const LetStmt& LetStmt) {
         }
 
         const auto ExprTy = Res.getType();
+
+        if (LetTy->isArrayType() && ExprTy->isArrayType()) {
+            const auto& ArrLetTy = LetTy->as<ArrayType>();
+            const auto& ArrExprTy = ExprTy->as<ArrayType>();
+
+            if (ArrLetTy.getElementType() != ArrExprTy.getElementType() || 
+                ArrLetTy.getSize() < ArrExprTy.getSize()) {
+
+                const auto Msg = std::format("incompatible array types", LetTy->toString(), ExprTy->toString());
+                SemanInfo.error(LetStmt.getValue()->getRange(), Msg);
+                return typecheckFail();
+            }
+            return;
+        }
         if (LetTy != ExprTy) {
             const auto Msg = std::format("expected type '{}', found '{}'", LetTy->toString(), ExprTy->toString());
             SemanInfo.error(LetStmt.getValue()->getRange(), Msg);
@@ -204,7 +225,14 @@ void TypeCheck::visit(const SubscriptExpr& SubscriptExpr) {
 
     if (!Fail) {
         const auto& PointerTy = ExprTy->as<PointerType>();
-        return returnValue({ PointerTy.getElementType(), true });
+        auto ElemTy = PointerTy.getElementType();
+
+        if (ElemTy->isArrayType()) {
+            const auto& ArrTy = ElemTy->as<ArrayType>();
+            ElemTy = SemanInfo.getTyContext().getPointerType(ArrTy.getElementType());
+        }
+
+        return returnValue({ ElemTy, true });
     }
     return typecheckFail();
 }
@@ -303,7 +331,6 @@ void TypeCheck::validateCallArgs(const FunctionType& FunctionTy, const FunctionC
     } else {
         for (unsigned Index = 0; Index < ArgRes.size(); Index++) {
             if (ArgRes[Index].isInvalid()) continue;
-
             if (ArgRes[Index].getType() != ParamTypes[Index]) {
                 const auto Msg = std::format("expects '{}', found '{}'", ParamTypes[Index]->toString(), ArgRes[Index].getType()->toString());
                 SemanInfo.error(FunctionCallExpr.getArg(Index).getRange(), Msg);

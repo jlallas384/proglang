@@ -11,6 +11,7 @@ SourceFile::SourceFile(std::string SrcString, std::string SourcePath): SourceCod
         }
         Left = Right;
     }
+    SourceLines.push_back("");
 }
 
 std::span<std::string_view> SourceFile::getSourceFromRange(const SourceRange &Range) {
