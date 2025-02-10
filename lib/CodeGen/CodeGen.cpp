@@ -13,7 +13,7 @@ void CodeGen::doIt(const Module& Module) {
     TheModule = std::make_unique<llvm::Module>("", *Context);
     TyEmitter = std::make_unique<TypeEmitter>(*Context, SemanInfo);
     Builder = std::make_unique<llvm::IRBuilder<>>(*Context);
-    AstVisitor::visit(Module);
+    AstConstVisitor::visit(Module);
     TheModule->dump();
     llvm::verifyModule(*TheModule, &llvm::outs());
     //TheModule->dum
@@ -34,7 +34,7 @@ void CodeGen::visit(const FunctionDecl& FunctionDecl) {
 
     llvmFunction = Func;
     CurrentFunction = &FunctionDecl;
-    AstVisitor::visit(FunctionDecl);
+    AstConstVisitor::visit(FunctionDecl);
 
     const auto& LastBlock = llvmFunction->back();
     if (LastBlock.empty() || !LastBlock.back().isTerminator()) {

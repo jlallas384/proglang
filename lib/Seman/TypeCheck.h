@@ -20,7 +20,7 @@ private:
     bool IsLValue;
 };
 
-class TypeCheck : public VisitorBase<TypeCheck, const AstBase, ExprResult>, public AstVisitor {
+class TypeCheck : public VisitorBase<TypeCheck, const AstBase, ExprResult>, public AstConstVisitor {
 public:
     TypeCheck(Seman& SemanInfo) : SemanInfo(SemanInfo), TyValidator(SemanInfo) {
     }

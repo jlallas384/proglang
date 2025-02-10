@@ -1,30 +1,58 @@
 #include "Stmt.h"
 #include "ASTVisitor.h"
 
-void IfStmt::accept(AstVisitor& Visitor) const {
+void IfStmt::accept(AstConstVisitor& Visitor) const {
     return Visitor.visit(*this);
 }
 
-void LetStmt::accept(AstVisitor& Visitor) const {
+void IfStmt::accept(AstVisitor& Visitor) {
     return Visitor.visit(*this);
 }
 
-void WhileStmt::accept(AstVisitor& Visitor) const {
+void LetStmt::accept(AstConstVisitor& Visitor) const {
     return Visitor.visit(*this);
 }
 
-void ExpressionStmt::accept(AstVisitor& Visitor) const {
+void LetStmt::accept(AstVisitor& Visitor) {
     return Visitor.visit(*this);
 }
 
-void CompoundStmt::accept(AstVisitor& Visitor) const {
+void WhileStmt::accept(AstConstVisitor& Visitor) const {
     return Visitor.visit(*this);
 }
 
-void ReturnStmt::accept(AstVisitor& Visitor) const {
+void WhileStmt::accept(AstVisitor& Visitor) {
     return Visitor.visit(*this);
 }
 
-void AssignStmt::accept(AstVisitor& Visitor) const {
+void ExpressionStmt::accept(AstConstVisitor& Visitor) const {
+    return Visitor.visit(*this);
+}
+
+void ExpressionStmt::accept(AstVisitor& Visitor) {
+    return Visitor.visit(*this);
+}
+
+void CompoundStmt::accept(AstConstVisitor& Visitor) const {
+    return Visitor.visit(*this);
+}
+
+void CompoundStmt::accept(AstVisitor& Visitor) {
+    return Visitor.visit(*this);
+}
+
+void ReturnStmt::accept(AstConstVisitor& Visitor) const {
+    return Visitor.visit(*this);
+}
+
+void ReturnStmt::accept(AstVisitor& Visitor) {
+    return Visitor.visit(*this);
+}
+
+void AssignStmt::accept(AstConstVisitor& Visitor) const {
+    return Visitor.visit(*this);
+}
+
+void AssignStmt::accept(AstVisitor& Visitor) {
     return Visitor.visit(*this);
 }

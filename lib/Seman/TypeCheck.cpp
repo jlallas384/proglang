@@ -98,7 +98,7 @@ void TypeCheck::visit(const ReturnStmt& ReturnStmt) {
 
 void TypeCheck::visit(const FunctionDecl& FunctionDecl) {
     CurrentFunction = &FunctionDecl;
-    AstVisitor::visit(FunctionDecl);
+    AstConstVisitor::visit(FunctionDecl);
 }
 
 void TypeCheck::visit(const LetStmt& LetStmt) {

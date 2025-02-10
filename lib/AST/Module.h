@@ -13,7 +13,8 @@ public:
         Declarations(std::move(Declarations)), TyContext(std::move(TyContext)), Source(Source) {}
     const auto& getDeclarations() const { return Declarations; }
     SourceFile& getSourceFile() const { return Source; }
-    void accept(AstVisitor& Visitor) const override;
+    void accept(AstConstVisitor& Visitor) const override;
+    void accept(AstVisitor& Visitor) override;
 public:
     std::vector<AstPtr<Declaration>> Declarations;
     std::shared_ptr<TypeContext> TyContext;

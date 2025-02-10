@@ -26,7 +26,6 @@ namespace {
 }
 
 void AstPrinter::visit(const BinaryOpExpr& Node) {
-    Node.fuck();
     AstScopeGuard Scoper(*this, "BinaryOpExpr");
     printNodeInfo("Kind", kindToString(Node.getKind()));
     Node.getLeft().accept(*this);

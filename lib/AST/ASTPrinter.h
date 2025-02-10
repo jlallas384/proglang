@@ -3,7 +3,7 @@
 #include <string_view>
 #include <vector>
 
-class AstPrinter : public AstVisitor {
+class AstPrinter : public AstConstVisitor {
 public:
     void visit(const BinaryOpExpr&) override;
     void visit(const CastExpr&) override;

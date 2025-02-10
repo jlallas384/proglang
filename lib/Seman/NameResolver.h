@@ -5,7 +5,7 @@
 
 class Seman;
 
-class NameResolver : public AstVisitor {
+class NameResolver : public AstConstVisitor {
 public:
     NameResolver(Seman& SemanInfo, const std::vector<const StructType*> &StructTypes);
     void visit(const Module&) override;

@@ -3,7 +3,7 @@
 #include "ASTBase.h"
 #include "Type.h"
 
-class AstVisitor;
+class AstConstVisitor;
 
 class Statement : public AstBase {
 };
@@ -15,11 +15,11 @@ public:
         TrueBlock(std::move(TrueBlock)), FalseBlock(std::move(FalseBlock)) {
     }
 
-    [[nodiscard]] const Expression& getCondition() const { return *Condition; }
-    [[nodiscard]] const Statement* getTrueBlock() const { return TrueBlock.get(); }
-    [[nodiscard]] const Statement* getFalseBlock() const { return FalseBlock.get(); }
-    void accept(AstVisitor& Visitor) const override;
-
+    [[nodiscard]] Expression& getCondition() const { return *Condition; }
+    [[nodiscard]] Statement* getTrueBlock() const { return TrueBlock.get(); }
+    [[nodiscard]] Statement* getFalseBlock() const { return FalseBlock.get(); }
+    void accept(AstConstVisitor& Visitor) const override;
+    void accept(AstVisitor& Visitor) override;
 private:
     AstPtr<Expression> Condition;
     AstPtr<Statement> TrueBlock, FalseBlock;
@@ -30,8 +30,9 @@ public:
     LetStmt(IdentifierSymbol Identifier, const TypeInfo &TyInfo, AstPtr<Expression> Value) :
         Nameable(std::move(Identifier)), TyInfo(TyInfo), Value(std::move(Value)) {}
     const auto& getTypeInfo() const { return TyInfo; }
-    const Expression* getValue() const { return Value.get();  }
-    void accept(AstVisitor& Visitor) const override;
+    Expression* getValue() const { return Value.get();  }
+    void accept(AstConstVisitor& Visitor) const override;
+    void accept(AstVisitor& Visitor) override;
 private:
     TypeInfo TyInfo;
     AstPtr<Expression> Value;
@@ -43,10 +44,10 @@ public:
                                                                       Body(std::move(Body)) {
     }
 
-    [[nodiscard]] const Expression& getCondition() const { return *Condition; }
-    [[nodiscard]] const Statement& getBody() const { return *Body; }
-    void accept(AstVisitor& Visitor) const override;
-
+    [[nodiscard]] Expression& getCondition() const { return *Condition; }
+    [[nodiscard]] Statement& getBody() const { return *Body; }
+    void accept(AstConstVisitor& Visitor) const override;
+    void accept(AstVisitor& Visitor) override;
 private:
     AstPtr<Expression> Condition;
     AstPtr<Statement> Body;
@@ -55,8 +56,9 @@ private:
 class ExpressionStmt : public Statement {
 public:
     explicit ExpressionStmt(AstPtr<Expression> Expr) : Expr(std::move(Expr)) {}
-    const Expression& getExpr() const { return *Expr; }
-    void accept(AstVisitor& Visitor) const override;
+    Expression& getExpr() const { return *Expr; }
+    void accept(AstConstVisitor& Visitor) const override;
+    void accept(AstVisitor& Visitor) override;
 private:
     AstPtr<Expression> Expr;
 };
@@ -66,9 +68,9 @@ public:
     explicit CompoundStmt(std::vector<AstPtr<Statement>> Body) : Body(std::move(Body)) {
     }
 
-    [[nodiscard]] const auto& getBody() const { return Body; }
-    void accept(AstVisitor& Visitor) const override;
-
+    [[nodiscard]] auto& getBody() const { return Body; }
+    void accept(AstConstVisitor& Visitor) const override;
+    void accept(AstVisitor& Visitor) override;
 private:
     std::vector<AstPtr<Statement>> Body;
 };
@@ -78,8 +80,9 @@ public:
     explicit ReturnStmt(AstPtr<Expression> Value) : Value(std::move(Value)) {
     }
 
-    [[nodiscard]] const Expression* getValue() const { return Value.get(); }
-    void accept(AstVisitor& Visitor) const override;
+    [[nodiscard]] Expression* getValue() const { return Value.get(); }
+    void accept(AstConstVisitor& Visitor) const override;
+    void accept(AstVisitor& Visitor) override;
 private:
     AstPtr<Expression> Value;
 };
@@ -87,9 +90,10 @@ private:
 class AssignStmt : public Statement {
 public:
     AssignStmt(AstPtr<Expression> Left, AstPtr<Expression> Right) : Left(std::move(Left)), Right(std::move(Right)) {}
-    const auto& getLeft() const { return *Left; }
-    const auto& getRight() const { return *Right; }
-    void accept(AstVisitor& Visitor) const override;
+    auto& getLeft() const { return *Left; }
+    auto& getRight() const { return *Right; }
+    void accept(AstConstVisitor& Visitor) const override;
+    void accept(AstVisitor& Visitor) override;
 private:
     AstPtr<Expression> Left, Right;
 };

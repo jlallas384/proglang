@@ -4,9 +4,9 @@
 #include "Decl.h"
 #include "Module.h"
 
-class AstVisitor {
+class AstConstVisitor {
 public:
-    virtual ~AstVisitor() = default;
+    virtual ~AstConstVisitor() = default;
     virtual void visit(const LiteralExpr&);
     virtual void visit(const UnaryOpExpr&);
     virtual void visit(const BinaryOpExpr&);
@@ -28,4 +28,30 @@ public:
     virtual void visit(const FunctionDecl&);
     virtual void visit(const StructDecl&);
     virtual void visit(const Module&);
+};
+
+class AstVisitor {
+public:
+    virtual ~AstVisitor() = default;
+    virtual void visit(LiteralExpr&);
+    virtual void visit(UnaryOpExpr&);
+    virtual void visit(BinaryOpExpr&);
+    virtual void visit(FunctionCallExpr&);
+    virtual void visit(NamedExpr&);
+    virtual void visit(DotExpr&);
+    virtual void visit(CastExpr&);
+    virtual void visit(SubscriptExpr&);
+    virtual void visit(CompoundExpr&);
+
+    virtual void visit(IfStmt&);
+    virtual void visit(WhileStmt&);
+    virtual void visit(CompoundStmt&);
+    virtual void visit(ReturnStmt&);
+    virtual void visit(LetStmt&);
+    virtual void visit(ExpressionStmt&);
+    virtual void visit(AssignStmt&);
+
+    virtual void visit(FunctionDecl&);
+    virtual void visit(StructDecl&);
+    virtual void visit(Module&);
 };

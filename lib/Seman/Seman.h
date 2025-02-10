@@ -5,7 +5,7 @@
 
 // TODO
 // cyclic structs
-class Seman : public AstVisitor {
+class Seman : public AstConstVisitor {
 public:
     Seman(TypeContext& TyContext, ErrorReporter& Reporter);
     void visit(const Module&) override;

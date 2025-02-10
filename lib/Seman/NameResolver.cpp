@@ -15,7 +15,7 @@ NameResolver::NameResolver(Seman& SemanInfo, const std::vector<const StructType*
 
 void NameResolver::visit(const Module& Module) {
     ScopeGuard Guard(CurrentScope);
-    AstVisitor::visit(Module);
+    AstConstVisitor::visit(Module);
 }
 
 void NameResolver::visit(const FunctionDecl& FunctionDecl) { //TODO take all function first in an initial pass
@@ -69,12 +69,12 @@ void NameResolver::visit(const LetStmt& Node) {
         SemanInfo.setType(Node, ResolvedType);
     }
 
-    AstVisitor::visit(Node);
+    AstConstVisitor::visit(Node);
 }
 
 void NameResolver::visit(const CompoundStmt& CompoundStmt) {
     ScopeGuard Guard(CurrentScope);
-    AstVisitor::visit(CompoundStmt);
+    AstConstVisitor::visit(CompoundStmt);
 }
 
 void NameResolver::visit(const NamedExpr& NamedExpr) {
@@ -101,7 +101,7 @@ void NameResolver::visit(const CastExpr& CastExpr) {
     } else {
 
     }
-    AstVisitor::visit(CastExpr);
+    AstConstVisitor::visit(CastExpr);
 }
 
 void NameResolver::visit(const StructDecl& StructDecl) {

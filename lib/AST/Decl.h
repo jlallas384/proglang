@@ -16,12 +16,13 @@ public:
     };
     FunctionDecl(IdentifierSymbol Identifier, const Type* RetType, std::vector<Param> Params, AstPtr<Statement> Body) :
         Nameable(std::move(Identifier)), RetType(RetType), Params(std::move(Params)), Body(std::move(Body)) {}
-    [[nodiscard]] const Statement& getBody() const {
+    [[nodiscard]] Statement& getBody() const {
         return *Body;
     }
     const Type& getRetType() const { return *RetType; }
-    const auto& getParams() const { return Params; }
-    void accept(AstVisitor& Visitor) const override;
+    auto& getParams() const { return Params; }
+    void accept(AstConstVisitor& Visitor) const override;
+    void accept(AstVisitor& Visitor) override;
 private:
     const Type* RetType;
     std::vector<Param> Params;
@@ -38,7 +39,8 @@ public:
 
     StructDecl(IdentifierSymbol Identifier, std::vector<StructDeclField> Fields) : Nameable(std::move(Identifier)), Fields(std::move(Fields)) {}
     auto& getFields() const { return Fields; }
-    void accept(AstVisitor& Visitor) const override;
+    void accept(AstConstVisitor& Visitor) const override;
+    void accept(AstVisitor& Visitor) override;
 private:
     std::vector<StructDeclField> Fields;
 };

@@ -13,7 +13,7 @@ class Seman;
 class StructType;
 class TypeContext;
 
-class Validator : public VisitorBase<Validator, const AstBase, bool>, public AstVisitor {
+class Validator : public VisitorBase<Validator, const AstBase, bool>, public AstConstVisitor {
 public:
     Validator(Seman& SemanInfo, TypeContext& TyContext);
     void visit(const FunctionDecl&) override;

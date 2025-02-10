@@ -18,7 +18,7 @@ namespace llvm {
 class Seman;
 struct BuilderTy;
 
-class CodeGen : public VisitorBase<CodeGen, const AstBase, llvm::Value*>, public AstVisitor {
+class CodeGen : public VisitorBase<CodeGen, const AstBase, llvm::Value*>, public AstConstVisitor {
 public:
     CodeGen(Seman& SemanInfo) : SemanInfo(SemanInfo) {}
     ~CodeGen() override;

@@ -50,6 +50,6 @@ void Validator::visit(const StructDecl& StructDecl) {
 
 void Validator::visit(const WhileStmt& WhileStmt) {
     LoopDepth++;
-    AstVisitor::visit(WhileStmt);
+    AstConstVisitor::visit(WhileStmt);
     LoopDepth--;
 }
