@@ -53,7 +53,7 @@ void TypeEmitter::visit(const StructType& Ty) {
 
 void TypeEmitter::visit(const PrimitiveType& Ty) {
     if (Ty.isBoolType()) {
-        return returnValue(llvm::IntegerType::get(Context, 1));
+        return returnValue(llvm::IntegerType::getInt1Ty(Context));
     }
     if (Ty.isVoidType()) {
         return returnValue(llvm::Type::getVoidTy(Context));
