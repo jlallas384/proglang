@@ -3,7 +3,7 @@
 #include <format>
 #include <cassert>
 
-void TypeCheck::visit(const LiteralExpr& LiteralExpr) {
+void TypeCheck::visit(LiteralExpr& LiteralExpr) {
     if (LiteralExpr.is<IntLiteral>()) {
         returnValue({ SemanInfo.getTyContext().getI32Type() });
     } else if (LiteralExpr.is<FloatLiteral>()) {
@@ -13,7 +13,7 @@ void TypeCheck::visit(const LiteralExpr& LiteralExpr) {
     }
 }
 
-void TypeCheck::visit(const BinaryOpExpr& BinaryOpExpr) {
+void TypeCheck::visit(BinaryOpExpr& BinaryOpExpr) {
     const auto LeftRes = check(BinaryOpExpr.getLeft());
     const auto RightRes = check(BinaryOpExpr.getRight());
 
@@ -39,6 +39,16 @@ void TypeCheck::visit(const BinaryOpExpr& BinaryOpExpr) {
         case TokenKind::Slash:
             Res = checkBinaryMulDivOp(LeftTy, RightTy, Range, Kind);
             break;
+        case TokenKind::Less:
+        case TokenKind::LessEqual:
+        case TokenKind::Greater:
+        case TokenKind::GreaterEqual:
+            Res = checkBinaryInequalityOp(LeftTy, RightTy, Range, Kind);
+            break;
+        case TokenKind::EqualEqual:
+        case TokenKind::NotEqual:
+            Res = checkBinaryEqualityOp(LeftTy, RightTy, Range, Kind);
+            break;
         default:
             assert(false);
             break;
@@ -48,8 +58,8 @@ void TypeCheck::visit(const BinaryOpExpr& BinaryOpExpr) {
     returnValue(Res);
 }
 
-void TypeCheck::visit(const NamedExpr& NamedExpr) {
-    const auto& NameRef = *SemanInfo.getReferencedName(NamedExpr.getIdentifier());
+void TypeCheck::visit(NamedExpr& NamedExpr) {
+    const auto& NameRef = *NamedExpr.getRefedName();
     auto Ty = SemanInfo.getType(NameRef);
 
     if (Ty->isArrayType()) {
@@ -60,7 +70,7 @@ void TypeCheck::visit(const NamedExpr& NamedExpr) {
     returnValue({ Ty, true });
 }
 
-void TypeCheck::visit(const FunctionCallExpr& FunctionCallExpr) {
+void TypeCheck::visit(FunctionCallExpr& FunctionCallExpr) {
     const auto Res = check(FunctionCallExpr.getFunction());
     if (Res.isInvalid()) {
         return typecheckFail();
@@ -77,7 +87,7 @@ void TypeCheck::visit(const FunctionCallExpr& FunctionCallExpr) {
     }
 }
 
-void TypeCheck::visit(const ReturnStmt& ReturnStmt) {
+void TypeCheck::visit(ReturnStmt& ReturnStmt) {
     auto RetValueType = SemanInfo.getTyContext().getVoidType();
     auto ReturnVal = ReturnStmt.getValue();
     if (ReturnVal) {
@@ -96,12 +106,12 @@ void TypeCheck::visit(const ReturnStmt& ReturnStmt) {
     }
 }
 
-void TypeCheck::visit(const FunctionDecl& FunctionDecl) {
+void TypeCheck::visit(FunctionDecl& FunctionDecl) {
     CurrentFunction = &FunctionDecl;
-    AstConstVisitor::visit(FunctionDecl);
+    AstVisitor::visit(FunctionDecl);
 }
 
-void TypeCheck::visit(const LetStmt& LetStmt) {
+void TypeCheck::visit(LetStmt& LetStmt) {
     const auto Value = LetStmt.getValue();
     const auto LetTy = SemanInfo.getType(LetStmt);
     if (Value) {
@@ -133,8 +143,8 @@ void TypeCheck::visit(const LetStmt& LetStmt) {
 
 }
 
-void TypeCheck::visit(const WhileStmt& WhileStmt) {
-    const auto& Cond = WhileStmt.getCondition();
+void TypeCheck::visit(WhileStmt& WhileStmt) {
+    auto& Cond = WhileStmt.getCondition();
     const auto Res = check(Cond);
 
     if (!Res.isInvalid()) {
@@ -148,8 +158,8 @@ void TypeCheck::visit(const WhileStmt& WhileStmt) {
     WhileStmt.getBody().accept(*this);
 }
 
-void TypeCheck::visit(const IfStmt& IfStmt) {
-    const auto& Cond = IfStmt.getCondition();
+void TypeCheck::visit(IfStmt& IfStmt) {
+    auto& Cond = IfStmt.getCondition();
     const auto Res = check(Cond);
 
     if (!Res.isInvalid()) {
@@ -166,7 +176,7 @@ void TypeCheck::visit(const IfStmt& IfStmt) {
     }
 }
 
-void TypeCheck::visit(const UnaryOpExpr& UnaryOpExpr) {
+void TypeCheck::visit(UnaryOpExpr& UnaryOpExpr) {
     auto Res = check(UnaryOpExpr.getValue());
     if (Res.isInvalid()) {
         return typecheckFail();
@@ -194,12 +204,12 @@ void TypeCheck::visit(const UnaryOpExpr& UnaryOpExpr) {
     returnValue(Res);
 }
 
-void TypeCheck::visit(const StructDecl& StructDecl) {
+void TypeCheck::visit(StructDecl& StructDecl) {
     TyValidator.validate(*SemanInfo.getType(StructDecl));
 }
 
-void TypeCheck::visit(const SubscriptExpr& SubscriptExpr) {
-    const auto& Expr = SubscriptExpr.getExpr();
+void TypeCheck::visit(SubscriptExpr& SubscriptExpr) {
+    auto& Expr = SubscriptExpr.getExpr();
     const auto ExprRes = check(Expr);
     const auto ExprTy = ExprRes.getType();
 
@@ -212,7 +222,7 @@ void TypeCheck::visit(const SubscriptExpr& SubscriptExpr) {
         }
     }
 
-    const auto& Subscript = SubscriptExpr.getSubscript();
+    auto& Subscript = SubscriptExpr.getSubscript();
     const auto SubscriptRes = check(Subscript);
     const auto SubscriptTy = SubscriptRes.getType();
 
@@ -237,10 +247,10 @@ void TypeCheck::visit(const SubscriptExpr& SubscriptExpr) {
     return typecheckFail();
 }
 
-void TypeCheck::visit(const AssignStmt& AssignStmt) {
+void TypeCheck::visit(AssignStmt& AssignStmt) {
     const auto LeftRes = check(AssignStmt.getLeft());
 
-    const auto& Right = AssignStmt.getRight();
+    auto& Right = AssignStmt.getRight();
     const auto RightRes = check(Right);
 
     if (LeftRes.isInvalid() || RightRes.isInvalid()) {
@@ -267,7 +277,7 @@ void TypeCheck::visit(const AssignStmt& AssignStmt) {
     }
 }
 
-void TypeCheck::visit(const DotExpr& DotExpr) {
+void TypeCheck::visit(DotExpr& DotExpr) {
     const auto LeftRes = check(DotExpr.getExpr());
     if (LeftRes.isInvalid()) {
         return typecheckFail();
@@ -293,7 +303,7 @@ void TypeCheck::visit(const DotExpr& DotExpr) {
     return typecheckFail();
 }
 
-void TypeCheck::visit(const CompoundExpr& CompoundExpr) {
+void TypeCheck::visit(CompoundExpr& CompoundExpr) {
     std::vector<const Type*> Types;
     for (const auto& Expr : CompoundExpr.getExprs()) {
         const auto Res = check(*Expr);
@@ -313,9 +323,30 @@ void TypeCheck::visit(const CompoundExpr& CompoundExpr) {
     returnValue({ ArrayTy });
 }
 
-ExprResult TypeCheck::check(const AstBase& Node) {
+void TypeCheck::visit(CastExpr& CastExpr) {
+    const auto CastTo = CastExpr.getType();
+    if (!CastTo) {
+        return typecheckFail();
+    }
+    const auto CastFrom = check(CastExpr.getValue()).getType();
+    if (!CastFrom) {
+        return typecheckFail();
+    }
+
+    if (checkCast(CastFrom, CastTo)) {
+        return returnValue({ CastTo });
+    }
+    const auto Msg = std::format("can't cast from '{}' to '{}'", CastFrom->toString(), CastTo->toString());
+    SemanInfo.error(CastExpr.getRange(), Msg);
+    return typecheckFail();
+}
+
+
+ExprResult TypeCheck::check(Expression& Node) {
     returnValue({});
-    return doVisit(Node);
+    const auto Res = doVisit(Node);
+    Node.setType(Res.getType());
+    return Res;
 }
 
 void TypeCheck::validateCallArgs(const FunctionType& FunctionTy, const FunctionCallExpr& FunctionCallExpr) {
@@ -348,6 +379,16 @@ std::pair<const StructDeclField*, const Type*> TypeCheck::getStructField(
     return { Field, SemanInfo.getType(*Field) };
 }
 
+bool TypeCheck::checkCast(const Type* From, const Type* To) {
+    if (From->isArithmeticType() && (To->isArithmeticType() || To->isBoolType())) {
+        return true;
+    }
+    if (From->isBoolType() && To->isArithmeticType()) {
+        return true;
+    }
+    return false;
+}
+
 ExprResult TypeCheck::checkDereferenceOp(ExprResult Res, const SourceRange& Range) const {
     const auto ResTy = Res.getType();
 
@@ -374,7 +415,7 @@ ExprResult TypeCheck::checkAddressofOp(ExprResult Res, const SourceRange& Range)
 ExprResult TypeCheck::checkUnaryPlusMinusOp(ExprResult Res, const SourceRange& Range, TokenKind Op) const {
     const auto ResTy = Res.getType();
     if (!ResTy->isArithmeticType()) {
-        const auto Msg = std::format("operand to unary '{}' must be an integer or floating point type, found '{}' instead", 
+        const auto Msg = std::format("operand to unary '{}' must be a signed integer or floating point type, found '{}' instead", 
             kindToString(Op), ResTy->toString());
         SemanInfo.error(Range, Msg);
         return {};
@@ -443,5 +484,27 @@ ExprResult TypeCheck::checkBinaryMulDivOp(const Type* Left, const Type* Right, c
         return {};
     }
     return { Left };
+}
+
+ExprResult TypeCheck::checkBinaryInequalityOp(const Type* Left, const Type* Right, const SourceRange& Range,
+    TokenKind Op) const {
+    if (Left == Right && (Left->isArithmeticType() || Left->isPointerType())) {
+        return { SemanInfo.getTyContext().getBoolType() };
+    }
+    const auto Msg = std::format("invalid operands of type '{}' and '{}' to operator '{}'",
+        Left->toString(), Right->toString(), kindToString(Op));
+    SemanInfo.error(Range, Msg);
+    return {};
+}
+
+ExprResult TypeCheck::checkBinaryEqualityOp(const Type* Left, const Type* Right, const SourceRange& Range,
+    TokenKind Op) const {
+    if (Left == Right && (Left->isArithmeticType() || Left->isPointerType()) || Left->isBoolType()) {
+        return { SemanInfo.getTyContext().getBoolType() };
+    }
+    const auto Msg = std::format("invalid operands of type '{}' and '{}' to operator '{}'",
+        Left->toString(), Right->toString(), kindToString(Op));
+    SemanInfo.error(Range, Msg);
+    return {};
 }
 

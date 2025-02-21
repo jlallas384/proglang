@@ -5,16 +5,16 @@
 
 class Seman;
 
-class NameResolver : public AstConstVisitor {
+class NameResolver : public AstVisitor {
 public:
     NameResolver(Seman& SemanInfo, const std::vector<const StructType*> &StructTypes);
-    void visit(const Module&) override;
-    void visit(const FunctionDecl&) override;
-    void visit(const LetStmt&) override;
-    void visit(const CompoundStmt&) override;
-    void visit(const NamedExpr&) override;
-    void visit(const CastExpr&) override;
-    void visit(const StructDecl&) override;
+    void visit(Module&) override;
+    void visit(FunctionDecl&) override;
+    void visit(LetStmt&) override;
+    void visit(CompoundStmt&) override;
+    void visit(NamedExpr&) override;
+    void visit(CastExpr&) override;
+    void visit(StructDecl&) override;
 private:
     const Type* tryResolveType(const Type& Ty);
     Seman& SemanInfo;

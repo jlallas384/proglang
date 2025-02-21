@@ -7,7 +7,7 @@ class TypeContext {
 public:
     TypeContext();
     const PointerType* getPointerType(const Type* ElementType);
-    const ArrayType* getArrayType(const Type* ElementType, std::uint32_t Size);
+    const ArrayType* getArrayType(const Type* ElementType, std::uint64_t Size);
     const FunctionType* getFunctionType(const Type* ReturnType, const std::vector<const Type*>& ParamTypes);
     const UnresolvedType* createUnresolvedType(IdentifierSymbol Identifier);
     const StructType* createStructType(std::string Name, const StructDecl& Decl);
@@ -18,6 +18,7 @@ public:
     const Type* getVoidType() const { return &VoidTy; }
 private:
     IntegerType I8Ty, I16Ty, I32Ty, I64Ty;
+    IntegerType U8Ty, U16Ty, U32Ty, U64Ty;
     FloatingPointType F32Ty, F64Ty;
     PrimitiveType BoolTy, VoidTy;
     std::vector<std::unique_ptr<PointerType>> PointerTypes;

@@ -7,7 +7,7 @@
 Seman::Seman(TypeContext& TyContext, ErrorReporter& Reporter) : TyContext(TyContext), Reporter(Reporter) {
 }
 
-void Seman::visit(const Module& Module) {
+void Seman::visit(Module& Module) {
     CurrentSource = &Module.getSourceFile();
     Validator Validator(*this, TyContext);
     if (Validator.doVisit(Module)) {

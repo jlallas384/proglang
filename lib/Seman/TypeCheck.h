@@ -20,35 +20,37 @@ private:
     bool IsLValue;
 };
 
-class TypeCheck : public VisitorBase<TypeCheck, const AstBase, ExprResult>, public AstConstVisitor {
+class TypeCheck : public VisitorBase<TypeCheck, AstBase, ExprResult>, public AstVisitor {
 public:
     TypeCheck(Seman& SemanInfo) : SemanInfo(SemanInfo), TyValidator(SemanInfo) {
     }
 
-    void visit(const LiteralExpr&) override;
-    void visit(const BinaryOpExpr&) override;
-    void visit(const NamedExpr&) override;
-    void visit(const FunctionCallExpr&) override;
-    void visit(const ReturnStmt&) override;
-    void visit(const FunctionDecl&) override;
-    void visit(const LetStmt&) override;
-    void visit(const WhileStmt&) override;
-    void visit(const IfStmt&) override;
-    void visit(const UnaryOpExpr&) override;
-    void visit(const StructDecl&) override;
-    void visit(const SubscriptExpr&) override;
-    void visit(const AssignStmt&) override;
-    void visit(const DotExpr&) override;
-    void visit(const CompoundExpr&) override;
+    void visit(LiteralExpr&) override;
+    void visit(BinaryOpExpr&) override;
+    void visit(NamedExpr&) override;
+    void visit(FunctionCallExpr&) override;
+    void visit(ReturnStmt&) override;
+    void visit(FunctionDecl&) override;
+    void visit(LetStmt&) override;
+    void visit(WhileStmt&) override;
+    void visit(IfStmt&) override;
+    void visit(UnaryOpExpr&) override;
+    void visit(StructDecl&) override;
+    void visit(SubscriptExpr&) override;
+    void visit(AssignStmt&) override;
+    void visit(DotExpr&) override;
+    void visit(CompoundExpr&) override;
+    void visit(CastExpr&) override;
 
 private:
-    ExprResult check(const AstBase& Node);
+    ExprResult check(Expression& Node);
+
     void typecheckFail() { returnValue({}); }
 
     void validateCallArgs(const FunctionType& FunctionTy, const FunctionCallExpr& FunctionCallExpr);
     std::pair<const StructDeclField*, const Type*> getStructField(const StructType& StructTy,
                                                                   const std::string& FieldName) const;
-
+    static bool checkCast(const Type* From, const Type* To);
     ExprResult checkDereferenceOp(ExprResult Res, const SourceRange& Range) const;
     ExprResult checkAddressofOp(ExprResult Res, const SourceRange& Range) const;
     ExprResult checkUnaryPlusMinusOp(ExprResult Res, const SourceRange& Range, TokenKind Op) const;
@@ -57,6 +59,9 @@ private:
     ExprResult checkBinaryAddSubOp(const Type* Left, const Type* Right, const SourceRange& Range, TokenKind Op) const;
     ExprResult checkBinaryLogicalOp(const Type* Left, const Type* Right, const SourceRange& Range, TokenKind Op) const;
     ExprResult checkBinaryMulDivOp(const Type* Left, const Type* Right, const SourceRange& Range, TokenKind Op) const;
+    ExprResult checkBinaryInequalityOp(const Type* Left, const Type* Right, const SourceRange& Range, TokenKind Op) const;
+    ExprResult checkBinaryEqualityOp(const Type* Left, const Type* Right, const SourceRange& Range, TokenKind Op) const;
+
     Seman& SemanInfo;
     TypeValidator TyValidator;
 

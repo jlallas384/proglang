@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Parser/TokenKind.h"
 #include "Identifier.h"
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <memory>
+
 
 class TypeContext;
 

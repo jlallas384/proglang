@@ -15,8 +15,7 @@ void CodeGen::doIt(const Module& Module) {
     Builder = std::make_unique<llvm::IRBuilder<>>(*Context);
     AstConstVisitor::visit(Module);
     TheModule->dump();
-    llvm::verifyModule(*TheModule, &llvm::outs());
-    //TheModule->dum
+    verifyModule(*TheModule, &llvm::outs());
 }
 
 void CodeGen::visit(const FunctionDecl& FunctionDecl) {
@@ -70,7 +69,7 @@ void CodeGen::visit(const LiteralExpr& LiteralExpr) {
 }
 
 void CodeGen::visit(const NamedExpr& NamedExpr) {
-    const auto RefName = SemanInfo.getReferencedName(NamedExpr.getIdentifier());
+    const auto RefName = NamedExpr.getRefedName();
     if (!NameValues.contains(RefName)) {
         NameValues[RefName] = emitFunctionProto(*static_cast<const FunctionDecl*>(RefName));
     }
@@ -168,6 +167,13 @@ void CodeGen::visit(const UnaryOpExpr& UnaryOpExpr) {
             const auto Value = emitLValue(Expr);
             return returnValue(Value);
         }
+        case TokenKind::Minus: {
+            const auto Value = emitRValue(Expr);
+            if (Value->getType()->isIntegerTy()) {
+                return returnValue(Builder->CreateNeg(Value));
+            }
+            return returnValue(Builder->CreateFNeg(Value));
+        }
             
     }
 }
@@ -175,7 +181,29 @@ void CodeGen::visit(const UnaryOpExpr& UnaryOpExpr) {
 void CodeGen::visit(const AssignStmt& AssignStmt) {
     const auto Lhs = emitLValue(AssignStmt.getLeft());
     const auto Rhs = emitRValue(AssignStmt.getRight());
+    Builder->CreateStore(Rhs, Lhs);
+}
 
+void CodeGen::visit(const CastExpr& CastExpr) {
+    const auto Value = emitRValue(CastExpr.getValue());
+    const auto From = CastExpr.getValue().getType();
+    auto& To = *CastExpr.getType();
+    llvm::Value* Res = nullptr;
+    if (From->isIntegerType()) {
+        if (To.isIntegerType()) {
+            bool Sign = To.as<IntegerType>().getSign();
+            Res = Builder->CreateIntCast(Value, TyEmitter->emit(To), Sign);
+        } else if (To.isFloatingPointType()) {
+            if (From->as<IntegerType>().getSign()) {
+                Res = Builder->CreateSIToFP(Value, TyEmitter->emit(To));
+            } else {
+                Res = Builder->CreateUIToFP(Value, TyEmitter->emit(To));
+            }
+        } else if (To.isBoolType()) {
+            Res = Builder->CreateIsNotNull(Value);
+        }
+    }
+    return returnValue(Res);
 }
 
 llvm::Function* CodeGen::emitFunctionProto(const FunctionDecl& FunctionDecl) {
@@ -247,6 +275,12 @@ llvm::Value* CodeGen::emitLogicalOr(const Expression& Left, const Expression& Ri
     Phi->addIncoming(Builder->getTrue(), LhsBlock);
     Phi->addIncoming(Rgt, RhsBlock);
     return Phi;
+}
+
+llvm::Value* CodeGen::emitRelational(const Expression& Left, const Expression& Right, TokenKind Op) {
+    const auto Lhs = emitRValue(Left);
+    const auto Rhs = emitRValue(Right);
+    return nullptr;
 }
 
 llvm::Value* CodeGen::emitLValue(const Expression& Expr) {

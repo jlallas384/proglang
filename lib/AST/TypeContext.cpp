@@ -8,9 +8,13 @@ TypeContext::TypeContext() :
     I64Ty(*this, "i64", 64, true),
     F32Ty(*this, "f32", 32),
     F64Ty(*this, "f64", 64),
+    U8Ty(*this, "u8", 8, false),
+    U16Ty(*this, "u16", 16, false),
+    U32Ty(*this, "u32", 32, false),
+    U64Ty(*this, "u64", 64, false),
     BoolTy(*this, "bool"),
     VoidTy(*this, "void"),
-    BuiltinTypes({ &I8Ty, &I16Ty, &I32Ty, &I64Ty, &F32Ty, &F64Ty, &BoolTy, &VoidTy })
+    BuiltinTypes({ &I8Ty, &I16Ty, &I32Ty, &I64Ty, &U8Ty, &U16Ty, &U32Ty, &U64Ty, &F32Ty, &F64Ty, &BoolTy, &VoidTy })
 {
 }
 
@@ -26,7 +30,7 @@ const PointerType* TypeContext::getPointerType(const Type* ElementType) {
     return PointerTypes.back().get();
 }
 
-const ArrayType* TypeContext::getArrayType(const Type* ElementType, std::uint32_t Size) {
+const ArrayType* TypeContext::getArrayType(const Type* ElementType, std::uint64_t Size) {
     const auto Iter = std::ranges::find_if(ArrayTypes, [&](const auto& Ptr) {
         return Ptr->getElementType() == ElementType && Ptr->getSize() == Size;
     });

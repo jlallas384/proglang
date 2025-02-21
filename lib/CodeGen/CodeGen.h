@@ -35,12 +35,14 @@ public:
     void visit(const FunctionCallExpr&) override;
     void visit(const UnaryOpExpr&) override;
     void visit(const AssignStmt&) override;
+    void visit(const CastExpr&) override;
 
 private:
     llvm::Function* emitFunctionProto(const FunctionDecl& FunctionDecl);
     llvm::BasicBlock* emitBlock(std::string_view Name) const;
     llvm::Value* emitLogicalAnd(const Expression& Left, const Expression& Right);
     llvm::Value* emitLogicalOr(const Expression& Left, const Expression& Right);
+    llvm::Value* emitRelational(const Expression& Left, const Expression& Right, TokenKind Op);
     llvm::Value* emitLValue(const Expression& Expr);
     llvm::Value* emitRValue(const Expression& Expr);
     std::unique_ptr<llvm::IRBuilder<>> Builder;

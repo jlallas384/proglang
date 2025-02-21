@@ -3,6 +3,7 @@
 #include "Type.h"
 #include "Utils/Literal.h"
 #include "Identifier.h"
+#include "Parser/TokenKind.h"
 #include <vector>
 
 class Expression : public AstBase {
@@ -43,9 +44,9 @@ public:
         Right(std::move(Right)) {
     }
 
-    [[nodiscard]] TokenKind getKind() const { return Kind; }
-    [[nodiscard]] Expression& getLeft() const { return *Left; }
-    [[nodiscard]] Expression& getRight() const { return *Right; }
+    TokenKind getKind() const { return Kind; }
+    auto& getLeft() const { return *Left; }
+    auto& getRight() const { return *Right; }
     void accept(AstConstVisitor& Visitor) const override;
     void accept(AstVisitor& Visitor) override;
     SourceRange getRange() const override {
@@ -63,8 +64,8 @@ public:
         Value(std::move(Value)) {
     }
 
-    [[nodiscard]] TokenKind getKind() const { return Kind; }
-    [[nodiscard]] Expression& getValue() const { return *Value; }
+    auto getKind() const { return Kind; }
+    auto& getValue() const { return *Value; }
     void accept(AstConstVisitor& Visitor) const override;
     void accept(AstVisitor& Visitor) override;
     SourceRange getRange() const override {
@@ -84,9 +85,9 @@ public:
         Args(std::move(Args)), EndLoc(EndLoc) {
     }
 
-    [[nodiscard]] Expression& getFunction() const { return *Function; }
-    [[nodiscard]] const std::vector<AstPtr<Expression>>& getArgs() const { return Args; }
-    Expression& getArg(unsigned Index) const { return *getArgs()[Index]; }
+    auto& getFunction() const { return *Function; }
+    auto& getArgs() const { return Args; }
+    auto& getArg(unsigned Index) const { return *getArgs()[Index]; }
     void accept(AstConstVisitor& Visitor) const override;
     void accept(AstVisitor& Visitor) override;
     SourceRange getRange() const override {
@@ -104,15 +105,17 @@ public:
     explicit NamedExpr(IdentifierSymbol Identifier) : Identififer(std::move(Identifier)) {
     }
 
-    [[nodiscard]] const auto& getIdentifier() const { return Identififer; }
+    const auto& getIdentifier() const { return Identififer; }
     void accept(AstConstVisitor& Visitor) const override;
     void accept(AstVisitor& Visitor) override;
     SourceRange getRange() const override {
         return Identififer.getRange();
     }
-
+    void setRefedName(const Nameable* R) { Ref = R; }
+    auto getRefedName() const { return Ref; }
 private:
     IdentifierSymbol Identififer;
+    const Nameable* Ref = nullptr;
 };
 
 class DotExpr : public Expression {
@@ -122,7 +125,7 @@ public:
     }
 
     const auto& getIdentifier() const { return Identifier; }
-    Expression& getExpr() const { return *Expr; }
+    auto& getExpr() const { return *Expr; }
     void accept(AstConstVisitor& Visitor) const override;
     void accept(AstVisitor& Visitor) override;
     SourceRange getRange() const override {
@@ -141,8 +144,8 @@ public:
 
     void accept(AstConstVisitor& Visitor) const override;
     void accept(AstVisitor& Visitor) override;
-    [[nodiscard]] auto& getTypeInfo() const { return TyInfo; }
-    [[nodiscard]] Expression& getValue() const { return *Value; }
+    auto& getTypeInfo() const { return TyInfo; }
+    auto& getValue() const { return *Value; }
 
     SourceRange getRange() const override {
         return {Value->getStart(), TyInfo.getRange().End};

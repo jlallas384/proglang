@@ -13,12 +13,12 @@ NameResolver::NameResolver(Seman& SemanInfo, const std::vector<const StructType*
     }
 }
 
-void NameResolver::visit(const Module& Module) {
+void NameResolver::visit(Module& Module) {
     ScopeGuard Guard(CurrentScope);
-    AstConstVisitor::visit(Module);
+    AstVisitor::visit(Module);
 }
 
-void NameResolver::visit(const FunctionDecl& FunctionDecl) { //TODO take all function first in an initial pass
+void NameResolver::visit(FunctionDecl& FunctionDecl) { //TODO take all function first in an initial pass
     const auto& Name = FunctionDecl.getIdentifier().getName();
     if (!CurrentScope->find(Name)) {
         CurrentScope->insert(Name, &FunctionDecl);
@@ -56,7 +56,7 @@ void NameResolver::visit(const FunctionDecl& FunctionDecl) { //TODO take all fun
     FunctionDecl.getBody().accept(*this);
 }
 
-void NameResolver::visit(const LetStmt& Node) {
+void NameResolver::visit(LetStmt& Node) {
     auto& Identifier = Node.getIdentifier();
     auto& Name = Identifier.getName();
     if (CurrentScope->find(Name)) {
@@ -69,42 +69,37 @@ void NameResolver::visit(const LetStmt& Node) {
         SemanInfo.setType(Node, ResolvedType);
     }
 
-    AstConstVisitor::visit(Node);
+    AstVisitor::visit(Node);
 }
 
-void NameResolver::visit(const CompoundStmt& CompoundStmt) {
+void NameResolver::visit(CompoundStmt& CompoundStmt) {
     ScopeGuard Guard(CurrentScope);
-    AstConstVisitor::visit(CompoundStmt);
+    AstVisitor::visit(CompoundStmt);
 }
 
-void NameResolver::visit(const NamedExpr& NamedExpr) {
+void NameResolver::visit(NamedExpr& NamedExpr) {
     const auto& Name = NamedExpr.getIdentifier().getName();
     const auto Sym = CurrentScope->find(Name);
     if (Sym == nullptr) {
         const auto Msg = std::format("Symbol '{}' not found", Name);
         SemanInfo.error(NamedExpr.getIdentifier().getRange(), Msg);
     } else {
-        SemanInfo.setReferencedName(NamedExpr.getIdentifier(), *Sym);
+        NamedExpr.setRefedName(*Sym);
     }
 }
 
-void NameResolver::visit(const CastExpr& CastExpr) {
+void NameResolver::visit(CastExpr& CastExpr) {
     const auto& CastTypeInfo = CastExpr.getTypeInfo();
     const auto CastType = CastTypeInfo.getType();
 
-    TypeResolver TyResolver(SemanInfo.getTyContext(), Types);
-
-    const auto [ResolvedCastType, FailedResolve] = TyResolver.resolve(*CastType);
-
-    if (FailedResolve) {
-        SemanInfo.error(CastTypeInfo.getRange(), "fail");
-    } else {
-
+    if (const auto ResolvedType = tryResolveType(*CastType)) {
+        CastExpr.setType(ResolvedType);
     }
-    AstConstVisitor::visit(CastExpr);
+
+    AstVisitor::visit(CastExpr);
 }
 
-void NameResolver::visit(const StructDecl& StructDecl) {
+void NameResolver::visit(StructDecl& StructDecl) {
     for (auto& Field : StructDecl.getFields()) {
         if (const auto ResolvedType = tryResolveType(*Field.FieldType)) {
             SemanInfo.setType(Field, ResolvedType);
